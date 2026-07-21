@@ -4,35 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "0bd2ba2c61ba5437",
+        "id": "3b04c5fb5704545f",
         "type": "tabs",
         "children": [
           {
-            "id": "abe7d278f0369482",
+            "id": "a7eff5996bac760e",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "02_harness/coding agent harness.md",
+                "file": "02_harness/Anthropic Harness 学习.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "coding agent harness"
-            }
-          },
-          {
-            "id": "e33657eb815d0ced",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "02_harness/coding agent harness.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "coding agent harness"
+              "title": "Anthropic Harness 学习"
             }
           }
         ]
@@ -92,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "667f49671c2484d0",
@@ -197,11 +184,21 @@
       "bases:新建数据库": false
     }
   },
-  "active": "abe7d278f0369482",
+  "active": "a7eff5996bac760e",
   "lastOpenFiles": [
-    "_assets/evoludation_20260629_113940.png",
+    "_assets/adversarial-verify.png",
+    "02_harness/Anthropic Harness 学习.md",
+    "_assets/fan-out-synthesize.png",
+    "_assets/dynamic_workflow_example.png",
     "02_harness/coding agent harness.md",
-    "01_foundation/prompt_structure.md.md",
-    "00_learning_path.md"
+    "_assets/Screenshot 2026-07-15 at 18.11.37.png",
+    "00_learning_path.md",
+    "_assets/Screenshot 2026-07-16 at 07.05.03.png",
+    "_assets/evoludation_20260629_113940.png",
+    "_assets/claude_harness_pattern.png",
+    "_assets/claude_harness.png",
+    "Screenshot 2026-07-21 at 14.09.21.png",
+    "_assets/dynamic_workflow.png",
+    "01_foundation/prompt_structure.md.md"
   ]
 }
