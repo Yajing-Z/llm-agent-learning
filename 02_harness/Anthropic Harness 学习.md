@@ -17,6 +17,9 @@ Self-preferential Bias（自评偏差）：让 Claude 自己 judge 自己的输�
 
 Goal Drift (目标漂移)： 多轮交互与 Compaction（上下文压缩）后，长上下文遗忘导致 Agent 偏离最初的需求。那些「不要做 XX」的负向约束最容易丢。
 
+### Anthropic的 Harness 架构
+“三智能体架构” Planner + Generator + Evaluator
+
 
 ## 什么是Dynamic workflow
 https://agent.csdn.net/6a388c9f662f9a54cb82826b.html
