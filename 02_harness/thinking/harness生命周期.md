@@ -27,3 +27,4 @@ Project：Agent 工作的物理边界与事实来源
 * Harness 的通用运行时 （Runtime 层），也就是Claude code，Codex在做的，它们提供通用的 编排、MCP、sandbox、Skill、handoff等 （可在 02_harness/concepts/Harness-definition 查看）
 * 特化的Harness配置，这一层与Project 强绑定，包括项目专属的 **System Prompts、Custom Skills、Linter 规则、测试套件以及进度文件（Plan.md）**
 
+
