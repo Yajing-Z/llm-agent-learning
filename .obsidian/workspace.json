@@ -8,45 +8,31 @@
         "type": "tabs",
         "children": [
           {
-            "id": "a7eff5996bac760e",
+            "id": "8383d1fc4e775d20",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "02_harness/thinking/harness生命周期.md",
+                "file": "02_articles_notes/anthropic_harness_dynamic-workflow.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "harness生命周期"
+              "title": "anthropic_harness_dynamic-workflow"
             }
           },
           {
-            "id": "82531905fa6cf5fb",
+            "id": "6577dc2b313e9923",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "02_harness/thinking/browser-harness.md",
+                "file": "02_articles_notes/rewrite-bun-in-rust.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "browser-harness"
-            }
-          },
-          {
-            "id": "60cd5e1cdc3a2f38",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "02_harness/Anthropic Harness 学习.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Anthropic Harness 学习"
+              "title": "rewrite-bun-in-rust"
             }
           }
         ],
@@ -107,7 +93,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 234.5,
+    "collapsed": true
   },
   "right": {
     "id": "667f49671c2484d0",
@@ -123,17 +110,17 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "02_harness/coding agent harness.md",
-                "collapseAll": false,
+                "file": "02_articles_notes/rewrite-bun-in-rust.md",
+                "collapseAll": true,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
                 "showSearch": false,
                 "searchQuery": "",
                 "backlinkCollapsed": false,
-                "unlinkedCollapsed": true
+                "unlinkedCollapsed": false
               },
               "icon": "links-coming-in",
-              "title": "coding agent harness 的反向链接列表"
+              "title": "rewrite-bun-in-rust 的反向链接列表"
             }
           },
           {
@@ -198,8 +185,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -212,27 +198,51 @@
       "bases:新建数据库": false
     }
   },
-  "active": "82531905fa6cf5fb",
+  "active": "6577dc2b313e9923",
   "lastOpenFiles": [
+    "02_articles_notes/anthropic_harness_dynamic-workflow.md",
+    "02_articles_notes/rewrite-bun-in-rust.md",
+    "01_concepts/existing_harness_solution.md",
+    "02_articles_notes/ai_agent_book.md",
+    "README.md",
+    "03_projects_study/browser_harness.md",
+    "03_projects_study/opencode.md",
+    "03_projects_study/pi_agent_harness.md",
+    "01_concepts/throughput_changes_merge.md",
+    "02_articles_notes/Agentic-Design-Patterns-CN-v20260115.pdf",
+    "02_articles_notes/Agentic-Design-Patterns.pdf",
+    "01_concepts/harness_definition.md",
+    "01_concepts/harness_lifecycle.md",
+    "00_roadmap/learning_path.md",
+    "project_from_github/Pi Agent Harness.md",
+    "assets/fan-out-synthesize.png",
+    "assets/evoludation_20260629_113940.png",
+    "assets/dynamic_workflow_example.png",
+    "assets/claude_harness_pattern.png",
+    "assets/claude_harness.png",
+    "assets/adversarial-verify.png",
+    "assets/Screenshot 2026-07-16 at 07.05.03.png",
+    "assets/Screenshot 2026-07-15 at 18.11.37.png",
+    "02_articles_notes/ai-agent-book.md",
+    "assets",
+    "03_projects_study",
+    "02_articles_notes",
+    "01_concepts",
+    "00_roadmap",
+    "aritcles/ai-agent-book.md",
+    "articles/ai-agent-book.md",
+    "articles/Agentic-Design-Patterns.pdf",
+    "articles/Agentic-Design-Patterns-CN-v20260115.pdf",
+    "articles",
+    "project_from_github/opencode.md",
     "02_harness/thinking/harness生命周期.md",
     "02_harness/thinking/browser-harness.md",
-    "02_harness/concepts/Harness-definition.md",
     "02_harness/Anthropic Harness 学习.md",
+    "02_harness/concepts/Harness-definition.md",
     "02_harness/concepts/吞吐量改变合并理念（Throughput Changes Merge Philosophy）.md",
-    "02_harness/thinking",
-    "02_harness/concepts",
-    "01_foundation/prompt_structure.md.md",
     "_assets/fan-out-synthesize.png",
     "_assets/Screenshot 2026-07-15 at 18.11.37.png",
-    "_assets/Screenshot 2026-07-16 at 07.05.03.png",
     "02_harness/coding agent harness.md",
-    "_assets/adversarial-verify.png",
-    "_assets/dynamic_workflow_example.png",
-    "00_learning_path.md",
-    "_assets/evoludation_20260629_113940.png",
-    "_assets/claude_harness_pattern.png",
-    "_assets/claude_harness.png",
-    "Screenshot 2026-07-21 at 14.09.21.png",
-    "_assets/dynamic_workflow.png"
+    "00_learning_path.md"
   ]
 }

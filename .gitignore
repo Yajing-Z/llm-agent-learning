@@ -1,0 +1,25 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Obsidian local workspace settings (personal UI layout, recent open files)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/plugins/obsidian-git/data.json
+
+# Environment variables & secrets
+.env
+.env.local
+*.pem
+
+# Python / Node / Temporary files
+__pycache__/
+*.pyc
+node_modules/
+dist/
+build/
