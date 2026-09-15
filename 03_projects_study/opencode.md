@@ -11,3 +11,11 @@ OpenCode 是一个开源的终端 AI Coding Agent 工具与 Harness 架构探索
 
 ## 📝 学习与测试心得
 *(在此记录使用过程中的实践体验、源码阅读心得与调优记录)*
+
+---
+
+## 🔗 体系联动
+- [[harness_definition|Harness 精确定义与通用组件清单]]
+- [[coding_agent_architecture|Coding Agent 架构演进分析]]
+- [[ralph_orchestrator|Ralph 循环与事件编排]]
+

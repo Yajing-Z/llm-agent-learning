@@ -11,3 +11,11 @@ Pi Agent 是一个探索轻量级 Agent 运行时与 Harness 约束机制的开�
 
 ## 📝 学习与测试心得
 *(在此记录源码阅读、环境搭建与扩展测试心得)*
+
+---
+
+## 🔗 体系联动
+- [[harness_definition|Harness 精确定义与通用组件清单]]
+- [[harness_lifecycle|通用运行时与项目特化配置解耦]]
+- [[ralph_orchestrator|Ralph 循环与事件编排]]
+

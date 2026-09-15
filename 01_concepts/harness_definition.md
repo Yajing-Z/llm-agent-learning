@@ -52,4 +52,12 @@ LangChain 的 handoff 是状态图（State Graph）中的节点流转，交接�
 └─────────────────────────────────────────┘
 ```
 
+---
+
+## 🔗 体系联动
+- [[harness_lifecycle|Harness 生命周期与通用运行时 vs 项目特化配置]]
+- [[coding_agent_architecture|Coding Agent 架构演进与方案分析]]
+- [[throughput_and_backpressure|吞吐量演进、Ralph 循环与背压机制]]
+- [[anthropic_dynamic_workflows|Anthropic Dynamic Workflows 深度解析]]
+
 
