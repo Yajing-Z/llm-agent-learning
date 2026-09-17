@@ -281,6 +281,7 @@ LLM 获得完整的上下文与客观事实后，整合信息生成面向用户�
 ## 🔗 体系联动
 
 - [[harness_definition|Harness 的精确定义与组件清单]]
+- [[mcp_architecture_and_protocol|MCP 架构定位、底层通信与工程落地深度解析]]
 - [[coding_agent_architecture|Coding Agent 核心架构与主流厂商方案对比]]
 - [[ralph_orchestrator|Ralph Orchestrator：事件驱动多 Agent 循环]]
 

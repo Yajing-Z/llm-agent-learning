@@ -12,7 +12,7 @@ https://www.langchain.com/blog/the-anatomy-of-an-agent-harness
 | 组件             | 说明                                 |
 | -------------- | ---------------------------------- |
 | System Prompts | AGENTS.md、CLAUDE.md                |
-| Tools & MCP    | 扩展智能体能力的工具和协议                      |
+| Tools & MCP    | 扩展智能体能力的工具和协议（详见 [[mcp_architecture_and_protocol|MCP 架构定位与底层通信]]） |
 | Skills         | 渐进式加载的知识包                          |
 | 沙箱基础设施         | 文件系统、浏览器、隔离执行环境                    |
 | 编排逻辑           | 子智能体生成、handoff (移交)、模型路由           |
@@ -58,6 +58,7 @@ LangChain 的 handoff 是状态图（State Graph）中的节点流转，交接�
 - [[harness_lifecycle|Harness 生命周期与通用运行时 vs 项目特化配置]]
 - [[coding_agent_architecture|Coding Agent 架构演进与方案分析]]
 - [[throughput_and_backpressure|吞吐量演进、Ralph 循环与背压机制]]
+- [[mcp_architecture_and_protocol|MCP 架构定位、底层通信与工程落地深度解析]]
 - [[anthropic_dynamic_workflows|Anthropic Dynamic Workflows 深度解析]]
 
 
