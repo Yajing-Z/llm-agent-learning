@@ -66,7 +66,7 @@ graph TD
 | [Anthropic Dynamic Workflows 深度解析](./02_articles_notes/anthropic_dynamic_workflows.md) | 解决懒惰/自评偏差/目标漂移；Claude 自行编写用过即弃的 JS 脚本；**6 大 Pattern**（分类分流、扇出汇总、对抗性验证等） | `Dynamic Workflows`, `Adversarial Verify`, `Fan-out` |
 | [Bun 53万行 Rust 机械移植复盘](./02_articles_notes/bun_rust_porting_case.md) | 50 个 Dynamic Workflows、峰值 64 并发 Claude、11 天 6778 次提交；1 实现者 + 2 对抗评审者；修流程而非手改代码 | `Tournament Pattern`, `Code Migration`, `CI Oracle` |
 | [LangChain & NVIDIA NemoClaw 蓝图](./02_articles_notes/langchain_nemoclaw_blueprint.md) | Deep Agents 架构蓝图与 Harness 调优循环；针对开源模型（Nemotron / 国产大模型）通过外围 Harness 调优逼近顶尖模型效果 | `Harness Tuning Loop`, `Deep Agents` |
-| [《AI Agent Book》精读笔记](./02_articles_notes/ai_agent_book.md) | 四大工具体系剖析：感知工具、执行工具、协作工具、**事件触发工具**（如 Ralph 的事件驱动唤醒） | `Tool Use`, `Event-driven Trigger` |
+| [《AI Agent Book》精读笔记](./02_articles_notes/ai_agent_book.md) | 四大工具体系剖析；**Wire-level 真实 API 工具调用闭环**（Schema 注册、tool_calls 挂起、回填与 stop 终态） | `Tool Use`, `Wire-level API`, `Event Trigger` |
 | `Agentic-Design-Patterns.pdf` | 吴恩达等学者的 Agentic 经典设计模式论文合集 | `Reflection`, `Tool Use`, `Planning`, `Multi-agent` |
 
 ---
@@ -95,7 +95,7 @@ llm-agent-learning/
 │
 ├── 02_articles_notes/                   # 📚 工业实践与前沿深度精读
 │   ├── Agentic-Design-Patterns.pdf      # Agentic 设计模式权威论文
-│   ├── ai_agent_book.md                 # 《AI Agent Book》精读：四大工具体系剖析
+│   ├── ai_agent_book.md                 # 《AI Agent Book》精读：四大工具体系与 Wire-Level 工具调用闭环
 │   ├── anthropic_dynamic_workflows.md   # Anthropic Dynamic Workflows 与 6 大 Pattern 深度解析
 │   ├── bun_rust_porting_case.md         # Bun 53万行 Rust 移植实战复盘 (64并发 Claude)
 │   └── langchain_nemoclaw_blueprint.md  # LangChain & NVIDIA NemoClaw 架构蓝图与调优循环
