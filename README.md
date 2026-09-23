@@ -17,6 +17,7 @@ graph TD
     subgraph C1["01 · 核心概念与工程基石 (Concepts)"]
         HD["Harness 准确定义 & 组件清单<br/>(LangChain / HumanLayer / Fowler)"]:::concept
         MCP["MCP 架构定位与底层通信<br/>(双链路解耦 & JSON-RPC 2.0)"]:::concept
+        TE["工具爆炸与上下文治理<br/>(Cursor 48工具裁剪 & 元代理 JIT)"]:::concept
         HL["生命周期与解耦<br/>(通用运行时 vs 项目特化配置)"]:::concept
         CA["Coding Agent 架构演进<br/>(OpenAI vs Anthropic 方案)"]:::concept
         TP["吞吐量演进与背压机制<br/>(Ralph Loop & Fast Iteration)"]:::concept
@@ -36,7 +37,7 @@ graph TD
         PI["Pi Agent<br/>(极简轻量级 Harness 架构)"]:::project
     end
 
-    HD --> MCP --> HL --> CA --> TP
+    HD --> MCP --> TE --> HL --> CA --> TP
     CA --> ADW --> BUN
     TP --> RALPH
     HD --> BROWSER
@@ -54,6 +55,7 @@ graph TD
 | :--- | :--- | :--- |
 | [Harness 精确定义与组件清单](./01_concepts/harness_definition.md) | LangChain 架构分解、HumanLayer 六个杠杆（≤60行AGENTS.md、背压、子代理等）、Martin Fowler 三层框架 | `Handoff`, `Back-Pressure`, `MCP` |
 | [MCP 架构定位、底层通信与工程落地](./01_concepts/mcp_architecture_and_protocol.md) | LLM 不跑 MCP；Host (e.g. Cursor) 与 LLM（HTTP POST tools）及 Host (e.g. Cursor) 与 MCP Server（JSON-RPC 2.0）双链路解耦；三大支柱与防爆仓工程实践 | `MCP`, `JSON-RPC 2.0`, `Context Firewall` |
+| [工具爆炸与上下文治理：以 Cursor 工业实践为例](./01_concepts/tool_explosion_and_governance.md) | 源码剖析全局 48 个内置工具角色裁剪；V0~V2 架构演进；XML 目录索引 + 两阶段元工具代理（`GetDynamicTools`/`CallDynamicTool`）；大文本防爆舱落盘 | `Tool Explosion`, `Meta-Tool Proxy`, `JIT Schema` |
 | [Harness 生命周期与解耦](./01_concepts/harness_lifecycle.md) | 模型与 Harness 的循环依赖困境；**通用运行时（Runtime）** 与 **项目特化配置（Project Config）** 的两层解耦架构 | `Runtime vs Config`, `Context Rot` |
 | [Coding Agent 架构演进与方案对比](./01_concepts/coding_agent_architecture.md) | Coding Agent 从单轮补全到全自主闭环；OpenAI 去中心化 SDK 移交 vs Anthropic 物理工件流转 | `Sebastian Raschka`, `OpenAI`, `Anthropic` |
 | [吞吐量演进、Ralph 循环与背压机制](./01_concepts/throughput_and_backpressure.md) | 优化迭代速度而非首次成功率；Ralph Loop 拦截退出与重注入上下文；没有测试/Lint 背压的迭代就是“快速腐烂” | `Ralph Loop`, `Back-Pressure`, `HumanLayer` |
@@ -92,6 +94,7 @@ llm-agent-learning/
 ├── 01_concepts/                         # 🧠 核心概念与工程基石
 │   ├── harness_definition.md            # Harness 精确定义与组件清单 (LangChain/HumanLayer/Fowler)
 │   ├── mcp_architecture_and_protocol.md # MCP 架构定位、底层通信与工程落地深度解析
+│   ├── tool_explosion_and_governance.md # 工具爆炸与上下文治理：以 Cursor 工业实践为例
 │   ├── harness_lifecycle.md             # Harness 生命周期与 Runtime / Config 解耦
 │   ├── coding_agent_architecture.md     # Coding Agent 架构演进与 OpenAI/Anthropic 方案对比
 │   └── throughput_and_backpressure.md   # 吞吐量演进、Ralph 循环与背压机制
