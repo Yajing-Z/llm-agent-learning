@@ -497,9 +497,36 @@ flowchart LR
   - **强类型参数化（Arguments）**：支持入参校验（如必填项、类型、描述）。
   - **结构化上下文组装**：返回标准 `messages` 序列（支持 `user`、`assistant` 角色预设），并可以直接**内嵌 Resources 资源**。
 
-#### ② Prompts 底层协议报文详解（JSON-RPC 2.0）
+#### ② 服务端定义与底层协议报文详解（FastMCP + JSON-RPC 2.0）
+
+- **服务端代码示例：Server 端如何定义并“暴露”一个 Prompt**：
+
+  在 MCP 架构中，Prompts 是由 Server 端代码显式注册并对外暴露的。以官方 Python FastMCP SDK 为例：
+
+  ```python
+  from mcp.server.fastmcp import FastMCP
+
+  mcp = FastMCP("code-governance-server")
+
+  # 🌟 服务端暴露一个代码审查 Prompt 模版
+  @mcp.prompt()
+  def vcf_security_review(repo_name: str, pr_number: int, strict_mode: bool = True) -> str:
+      """对指定的 PR 进行企业合规与安全漏洞审查"""
+      # Server 端可在返回前动态查库、加载团队最新安全基线
+      rules_version = fetch_latest_security_rules_version()
+
+      return f"""你是一个企业安全审查专家（安全规则库版本: {rules_version}）。
+  请审查仓库 {repo_name} 的 PR #{pr_number}。
+  必须严格检查以下项：
+  1. 是否包含硬编码的 API Token、私钥或内网密码；
+  2. 是否存在 SQL 注入或不安全的系统调用；
+  3. 审查严格度级别: {'最高 (Strict)' if strict_mode else '常规 (Normal)'}。
+  请生成格式化的 Review 报告并在发现高危漏洞时阻止合并。"""
+  ```
 
 - **模版发现（`prompts/list`）**：
+
+  客户端向网关发送查询，网关返回可用模版清单与参数要求：
 
   ```json
   // 请求
@@ -512,10 +539,12 @@ flowchart LR
     "result": {
       "prompts": [
         {
-          "name": "generate_commit_message",
-          "description": "基于当前的 git diff 生成符合 Angular 规范的 commit message",
+          "name": "vcf_security_review",
+          "description": "对指定的 PR 进行企业合规与安全漏洞审查",
           "arguments": [
-            { "name": "style", "description": "提交风格，例如 conventional 或 gitmoji", "required": false }
+            { "name": "repo_name", "description": "仓库名称", "required": true },
+            { "name": "pr_number", "description": "PR 编号", "required": true },
+            { "name": "strict_mode", "description": "是否开启严格模式", "required": false }
           ]
         }
       ]
@@ -525,6 +554,8 @@ flowchart LR
 
 - **模版编译与获取（`prompts/get`，高级内联 Resource 用法）**：
 
+  客户端选定模版并传入参数后，向服务端请求完整 messages。服务端返回时可**直接内联嵌入只读 Resource**：
+
   ```json
   // 请求
   {
@@ -532,23 +563,23 @@ flowchart LR
     "id": 21,
     "method": "prompts/get",
     "params": {
-      "name": "generate_commit_message",
-      "arguments": { "style": "conventional" }
+      "name": "vcf_security_review",
+      "arguments": { "repo_name": "vcf/dl-vm-test-automation", "pr_number": 88 }
     }
   }
 
-  // 响应：注意其内联了 type: "resource" 数据
+  // 响应：服务端内联了变更 Diff 资源，免去模型发起 tool_calls
   {
     "jsonrpc": "2.0",
     "id": 21,
     "result": {
-      "description": "Generate commit message for staging changes",
+      "description": "VCF PR #88 专项安全审查",
       "messages": [
         {
           "role": "user",
           "content": {
             "type": "text",
-            "text": "请根据下方提供的 Git 暂存区改动，生成一条严谨的 Commit 信息。规范遵循 conventional 格式。"
+            "text": "你是一个企业安全审查专家...\n请审查仓库 vcf/dl-vm-test-automation 的 PR #88..."
           }
         },
         {
@@ -556,7 +587,7 @@ flowchart LR
           "content": {
             "type": "resource",
             "resource": {
-              "uri": "git://staging/diff",
+              "uri": "git://vcf/dl-vm-test-automation/pull/88/diff",
               "mimeType": "text/x-diff",
               "text": "--- a/src/auth.ts\n+++ b/src/auth.ts\n@@ -10,2 +10,3 @@\n+ export const verifyToken = () => true;"
             }
@@ -567,9 +598,7 @@ flowchart LR
   }
   ```
 
----
-
-### 4. 关键架构辨析：MCP 协议规范 vs IDE 宿主工程落地
+#### ③ 宿主落地与真实网关映射：Cursor 的 `/` 斜杠指令与 SKILL.md 辨析
 
 在实际开发使用时，经常会遇到一个困惑：**“既然 MCP 官方定义了 Prompts 支柱，为什么我在 Cursor 里输入 `/` 斜杠指令，弹出的却是 `.cursor/skills-cursor/` 下的 `SKILL.md`？”**
 
@@ -596,7 +625,7 @@ flowchart TD
     UI -. "未来潜在聚合演进" .-> P_Impl
 ```
 
-#### ① 对比矩阵：MCP Prompts vs Cursor Skills
+##### 对比矩阵：MCP Prompts vs Cursor Skills
 
 | 维度 | **MCP Prompts（协议级原语）** | **Cursor Skills（IDE 平台级实现）** |
 | :--- | :--- | :--- |
@@ -606,7 +635,7 @@ flowchart TD
 | **更新与治理** | **服务端集中更新**：企业网关更新一次，全员秒级无感生效 | **客户端本地分散更新**：依赖 Git 拉取或人工修改本地 Markdown |
 | **计算能力** | **动态可编程**：Server 返回前可实时查库、算权限、装配数据 | **静态文本规则**：由 LLM 在推理期阅读 Markdown 后依规行事 |
 
-#### ② 真实环境探查：为什么当前环境里的 3 个网关看不到 Prompts？
+##### 真实环境探查：为什么当前环境里的 3 个网关看不到 Prompts？
 
 探查当前环境配置的 3 个生产 MCP 网关（`~/.cursor/mcp.json`）：
 
@@ -622,9 +651,9 @@ flowchart TD
 }
 ```
 
-**说明这三个内网网关当前均作为纯粹的“Tool Gateway（工具网关）”对外暴露能力，服务端并未实现 `"prompts": {}` 或 `"resources": {}` 能力。**
+**说明这三个内网网关当前均作为纯粹的“Tool Gateway（工具网关）”对外暴露能力，服务端并未开启 `"prompts": {}` 能力。**
 
-#### ③ 具象推演：若企业网关暴露 Prompts，会带来什么变革？
+##### 具象推演：若企业网关暴露 Prompts，会带来什么变革？
 
 - **以 `vmw-jira` 网关为例**：
   若在远端网关实现 `create_standard_bug` Prompt，开发者调用时网关自动拉取当前 VCF 项目的最新缺陷模板字段，保证团队提单要素完整，无需工程师个人在本地编写提示词；
@@ -633,7 +662,7 @@ flowchart TD
 
 ---
 
-### 5. 三大支柱端到端协同实战与选型指南
+### 4. 三大支柱端到端协同实战与选型指南
 
 在一个端到端的复杂工程排障场景中，三大原语协同流转的完整闭环如下：
 
@@ -670,10 +699,7 @@ sequenceDiagram
 - **优先选 Prompt**：只要你想将某种**反复使用的高级指令模版、领域业务规约或标准化评审流程**中心化固化下来分发给团队，实现“Prompt as Code”与跨客户端统一分发；
 - **必须选 Tool**：涉及**写操作、状态改变、外部系统调用等具有副作用的动作**（提 PR、发邮件、修改配置、执行 Shell），或者参数完全依赖 LLM 根据当前语境发散决断的场景。
 
-
 ---
-
-
 
 ## 🔬 四、 工业级落地实战解析（以 Cursor 与企业级 `github-brcm` MCP 为例）
 
@@ -687,21 +713,34 @@ sequenceDiagram
 1. **上下文挤爆（Context Pollution）**：单次工具声明吃掉数千 Token，挤压有限的代码与会话窗口；
 2. **TTFT 延迟骤增与成本浪费**。
 
-**Cursor Harness 的防爆舱工程实现**：
+**Cursor Harness 的防爆舱工程实现（从探测到切片读取全流程）**：
 
-1. **拦截与落盘**：检测到 MCP 工具定义体积过大，底层将其直接转储写入工件缓存：
-  `~/.cursor/projects/.../agent-tools/b6303513-1540-4aab-8348-e8f5e5b7193b.txt`
-2. **指针回传**：仅向内部返回轻量级指针（`filePath` 与 `note: Large output has been written...`）。
-3. **按需局部切片（Lazy Read）**：模型按需调用 `Read(offset, limit)` 分段读取工具 Schema，保持上下文极为轻量。
-
-
+```text
+[用户提问] "github-brcm 有什么功能？展示转为 LLM 后的函数"
+   │
+   ▼
+[模型发起探测] LLM 调用 Cursor 内置宿主工具: GetDynamicTools({ namespace: "user-github-brcm" })
+   │
+   ▼
+[Harness 路由与鉴权] Cursor 读取 mcp.json，从 macOS Keychain 取出 OAuth Token，向网关发标准 MCP POST tools/list
+   │
+   ▼
+[触发防爆舱拦截] 网关回传 31 个工具定义（1207 行，36.7 KB），Harness 上下文防火墙拦截该超长流
+   │
+   ▼
+[转储物理工件] 落盘写入: ~/.cursor/projects/.../agent-tools/b6303513-1540-4aab-8348-e8f5e5b7193b.txt
+   │
+   ▼
+[轻量指针回传] 仅给 LLM 回传: { filePath: ".../b6303513-...txt", note: "Large output has been written..." }
+   │
+   ▼
+[局部惰性切片] LLM 发起 Read({ path: "...b6303513...", offset: 1, limit: 120 }) 按需读取，完成清单解析
+```
 
 ### 2. Cursor 内部工具 vs 标准 MCP 协议（`GetDynamicTools` vs `tools/list`）
 
 - `tools/list`：是 **公开的标准 MCP 规范方法名**。所有合规的 MCP Server 必须实现该方法以暴露能力。
 - `GetDynamicTools`：是 **Cursor IDE 注入给 LLM 的宿主原生工具**。LLM 通过调用 `GetDynamicTools({ "namespace": "user-github-brcm" })` 触发 Cursor Harness 去向远端网关执行一次真实的 `tools/list` 查询。
-
-
 
 ### 3. 企业级传输通道：`streamable-http` 网关
 
@@ -722,7 +761,59 @@ https://gateway-github-vcf.apps-tpcf-epic-gto.lvn.broadcom.net/github/mcp
 
 ---
 
+## 🛠️ 五、 手动实操与调试验证指南
 
+如果想脱离 IDE，亲手抓包体验最纯粹的 MCP JSON-RPC 通信过程，推荐以下三种方式：
+
+### 方式 1：终端 stdio 管道直接调试（零门槛）
+
+使用 Node.js 启动一个无需鉴权的本地 MCP 样例：
+
+```bash
+npx -y @modelcontextprotocol/server-sqlite --test
+```
+
+在终端进程挂起等待输入时，**手动输入初始化握手报文并回车**：
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test-client","version":"1.0"}}}
+```
+
+紧接着**手动输入能力查询报文并回车**：
+
+```json
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
+```
+
+终端 stdout 会立刻回显包含 `read_query`, `write_query` 等标准 JSON Schema 的结果。
+
+### 方式 2：使用官方 MCP Inspector 可视化调试
+
+```bash
+npx @modelcontextprotocol/inspector
+```
+
+打开本地可视化 UI，点击 **“List Tools”** 或发起 **“Call Tool”**，可以在 Network 面板完整审视每一次 JSON-RPC 的请求头、方法名与返回报文。
+
+### 方式 3：携带 Bearer Token 手动 curl 远端网关
+
+如果已从环境或浏览器 SSO 会话中获取了 Broadcom OAuth Bearer Token，可在终端直接向企业网关发送 POST 请求：
+
+```bash
+curl -X POST "https://gateway-github-vcf.apps-tpcf-epic-gto.lvn.broadcom.net/github/mcp" \
+  -H "Authorization: Bearer <你的_Broadcom_OAuth_Token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/list",
+    "params": {}
+  }'
+```
+
+服务端会直接返回包含 31 个工具定义的纯 JSON-RPC 报文（即落盘工件 `b6303513-...txt` 的数据源头）。
+
+---
 
 ## 🔗 体系联动
 
