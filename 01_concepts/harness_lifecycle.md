@@ -54,6 +54,5 @@
 ---
 
 ## 🔗 关联阅读
-- [[harness_definition|Harness 的精确定义与组件清单]]
+- [[harness_definition|Harness 的精确定义与组件清单（含背压机制）]]
 - [[coding_agent_architecture|Coding Agent 核心架构与主流厂商方案对比]]
-- [[throughput_and_backpressure|吞吐量演进、Ralph 循环与背压机制]]

@@ -43,8 +43,28 @@ LangChain 的 handoff 是状态图（State Graph）中的节点流转，交接�
 | 5   | Hooks         | 生命周期脚本，成功静默/失败报错       |
 | 6   | Back-Pressure | 测试/构建/类型检查 = 自我验证回路    |
 
+#### 深度拆解：背压机制与吞吐量理念 (Throughput & Back-Pressure)
 
+> **核心工程哲学**: **优化迭代速度而非首次成功率**（Optimize for iteration speed, not first-shot success rate）。
 
+- **吞吐量改变开发范式**：在工业级 Agent 落地中，高吞吐量与快速交付的关键在于“快速失败与敏捷纠偏”，而非单次极慢的完美主义执行。
+- **低效做法 vs 高效做法**：
+  - ❌ 每次微小改动都盲目跑全量庞大测试，浪费巨大的 Context 与 Token。
+  - ✅ 建立轻量级反馈回路（Linter、静态类型、轻量单元测试）快速拦截问题。
+  - ✅ **模型分层**：便宜模型（Sonnet / Haiku）处理局部具体子任务，昂贵模型（Opus）专注于顶层编排与最终仲裁。
+- ⚠️ **背压是底线防护**：必须有严谨的测试、Lint 与结构检查作为护栏。**没有背压的“快速迭代”本质上只是“快速腐烂”（Fast Rotting）**。
+
+#### 长程执行与循环拦截机制 (Ralph Loop)
+
+长时间自主执行（Long-running Autonomous Execution）的核心挑战在于：如何让 Agent 在单次上下文用尽或出现错误时不直接崩溃退出？
+
+- **物理持久化**：使用文件系统 + Git 追踪持久化中间成果与任务状态。
+- **退出拦截与重启 (Ralph Loop)**：拦截 Agent 的退出意图，在干净的新上下文窗口中重新注入初始提示词与当前任务状态文件。
+- **规划与步步自我验证**：将宏观目标逐级分解为微任务，配合 Critic/Evaluator 实行步步验证。
+
+```text
+Codex 本地审核 ──► 请求额外智能体审查 ──► 对反馈做出响应 ──► 循环直到所有审核通过
+```
 
 ### 来自 Martin Fowler（三层框架）
 
@@ -66,7 +86,6 @@ LangChain 的 handoff 是状态图（State Graph）中的节点流转，交接�
 
 - [[harness_lifecycle|Harness 生命周期与通用运行时 vs 项目特化配置]]
 - [[coding_agent_architecture|Coding Agent 架构演进与方案分析]]
-- [[throughput_and_backpressure|吞吐量演进、Ralph 循环与背压机制]]
 - [[mcp_architecture_and_protocol|MCP 架构定位、底层通信与工程落地深度解析]]
 - [[anthropic_dynamic_workflows|Anthropic Dynamic Workflows 深度解析]]
 

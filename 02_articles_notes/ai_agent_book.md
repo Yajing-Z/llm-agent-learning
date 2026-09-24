@@ -14,7 +14,7 @@
 
 **协作工具**让 Agent 与其他 Agent 分工合作：委托子 Agent 完成专项任务，在关键决策点请求人类确认，或在多 Agent 系统中协调行动。
 
-**事件触发工具**与前三类在调用方式上有本质的区别——它们不是 Agent 主动调用的，而是作为外部输入来驱动 Agent 开始执行任务。比如收到一封新邮件、到了某个预定时间点、或另一个系统发出了 Webhook 回调，这些事件会激活 Agent，让它开始后续的思考和行动。虽然事件触发不是 Agent 主动调用的，但它是 Agent 与外部世界交互的通道之一，因此归入广义的工具体系。例如 [[ralph_orchestrator|Ralph Orchestrator]] 就是通过事件驱动，从而调用 Agent 去执行任务。
+**事件触发工具**与前三类在调用方式上有本质的区别——它们不是 Agent 主动调用的，而是作为外部输入来驱动 Agent 开始执行任务。比如收到一封新邮件、到了某个预定时间点、或另一个系统发出了 Webhook 回调，这些事件会激活 Agent，让它开始后续的思考和行动。虽然事件触发不是 Agent 主动调用的，但它是 Agent 与外部世界交互的通道之一，因此归入广义的工具体系。例如外部调度系统就是通过事件驱动监听，从而唤起 Agent 去执行任务。
 
 ---
 
@@ -280,8 +280,7 @@ LLM 获得完整的上下文与客观事实后，整合信息生成面向用户�
 
 ## 🔗 体系联动
 
-- [[harness_definition|Harness 的精确定义与组件清单]]
+- [[harness_definition|Harness 的精确定义与组件清单（含背压与循环机制）]]
 - [[mcp_architecture_and_protocol|MCP 架构定位、底层通信与工程落地深度解析]]
 - [[coding_agent_architecture|Coding Agent 核心架构与主流厂商方案对比]]
-- [[ralph_orchestrator|Ralph Orchestrator：事件驱动多 Agent 循环]]
 
