@@ -1,0 +1,78 @@
+---
+description: Enforce conceptual consistency and prevent contradictions across all LLM Agent & Harness knowledge notes.
+globs: 01_concepts/**/*.md,02_deep_dives/**/*.md,README.md
+alwaysApply: false
+---
+
+# Concept Consistency & Non-Contradiction Guidelines (概念自洽与无矛盾规范)
+
+本规则是《LLM Agent & Harness Engineering》知识库的权威概念裁决基准。编写、修改或重构任何笔记时，必须严格遵守以下术语边界与公理体系，杜绝全库概念冲突。
+
+---
+
+## 一、 全局核心心智模型与公理体系
+
+1. **Harness 核心公理**:
+   $$\text{Harness} = \text{Agent} - \text{Model}$$
+   - **Model**: 无状态计算核心，只负责认知、推理与意图决断，无法直连物理网络与外部操作系统。
+   - **Harness**: 模型外围一切系统软件工程的总和（上下文管理、工具调度网关、子智能体编排、沙箱隔离、背压回路与状态持久化）。
+   - **Project**: 既有物理边界与真实世界事实（代码库、业务规范、测试门控）。
+
+2. **背压核心哲学 (Back-Pressure Philosophy)**:
+   - **“优化迭代速度而非首次成功率 (Optimize for iteration speed, not first-shot success rate)”**。
+   - 高吞吐量要求快速失败与敏捷纠偏，测试与 Linter 构成底线护栏。没有背压的高吞吐就是“快速腐烂 (Fast Rotting)”。
+
+3. **MCP 双链路解耦公理**:
+   - **LLM 本身对 MCP 一无所知，也不跑 MCP 协议。**
+   - 链路 A（Host ↔ LLM）：标准 HTTP REST API + `tools: [...]` JSON Schema 驱动。
+   - 链路 B（Host ↔ MCP Server）：JSON-RPC 2.0 报文（stdio 或 Streamable HTTP）。
+
+---
+
+## 二、 三大易混淆概念权威裁决矩阵
+
+### 1. Handoff（智能体任务移交）机制三流派
+
+严禁将各流派的交接载体混同：
+- **Anthropic 方案**: 基于**物理工件 (Physical Artifacts)**。交接载体为磁盘文件（`Plan.md`、Git commit、测试门控）。Subagent A 完成并落盘退出，Subagent B 启动并读取物理工件获取状态。两智能体间无进程内直接通讯。
+- **OpenAI 方案**: 基于 **Agents SDK 的去中心化运行时移交 (Decentralized Handoff)**。Subagent A 在执行过程中直接将控制权移交给 Subagent B，上下文与函数堆栈在会话中转交。
+- **LangChain 方案**: 基于 **StateGraph 的类型化字典 (Typed State)**。在显式有向状态图中依条件路由边（Conditional Edges）流转。
+
+### 2. Anthropic Harness 的两套解耦机制
+
+严禁将跨任务长程持久化与单会话内并发编排对立：
+- **机制 A · 长程自主持久循环 (Long-running Autonomous SWE Loop)**:
+  - 核心：物理工件持久化 + 测试门控 + **Ralph Loop (退出拦截与干净环境重启)**。
+  - 目标：解决单会话 Context 耗尽、崩溃恢复与步步验证。
+- **机制 B · 单会话动态编排 (Dynamic Workflows in Claude Code)**:
+  - 核心：现场动态生成**用过即弃 (ephemeral) 的 JavaScript 编排脚本**。
+  - 目标：在单会话内使用 6 种 Harness Pattern（分类分流、扇出汇总、对抗性验证等）并发调度大规模 Subagent。
+- **正交关系**: 动态脚本负责“局部并发”，物理工件负责“全局持久”，两者相辅相成。
+
+### 3. 工具爆炸治理：理论模型与 Cursor 工业落地映射
+
+严禁将 Cursor 的元代理实现割裂为非主流方案，二者为“理论与工业实证”关系：
+- **Tool RAG (向量检索)**: 理论方案，适合海量平铺接口；Cursor 现行架构未采用此方案。
+- **Sub-Agent 隔离 (上下文防火墙)**: 对应 Cursor **防线 1**：全局 48 内置工具分角色裁剪（主会话 ~15 个，Pi-Agent 专属轻量搜索工具，CI 专用评估工具）。
+- **两阶段元发现 (Dynamic Discovery)**: 对应 Cursor **防线 2 & 3**：系统提示词紧凑 XML 目录 (`<dynamic_tool_catalog>`) + 两阶段元工具代理 (`GetDynamicTools` + `CallDynamicTool`)。
+- **物理防爆舱 (Context Spilling)**: Cursor 独创工程防线，超大返回落盘为 `agent-tools/*.txt` 并回传指针惰性切片读取。
+
+---
+
+## 三、 严禁出现的反模式表述 (Forbidden Contradictions)
+
+| ❌ 严禁出现的错误/矛盾描述 | ✅ 统一的标准自洽表述 |
+| :--- | :--- |
+| “大模型通过 MCP 协议直接调用了远端数据库或 GitHub API。” | “大模型生成标准 tool_calls，由宿主 Harness 拦截并转译为 MCP 的 JSON-RPC `tools/call` 请求与网关通信。” |
+| “Cursor 启动时把所有 MCP Server 的完整 JSON Schema 注入给 LLM。” | “Cursor 仅在 System Prompt 注入工具名 XML 索引，入参结构通过两阶段元工具 `GetDynamicTools` JIT 懒加载。” |
+| “Anthropic 放弃了物理状态交接，改用纯内存中执行 JS 脚本。” | “Anthropic 区分长程任务（物理工件与 Ralph Loop）与单会话编排（动态临时 JS 脚本）两大场景。” |
+| “全局 48 个内置工具与主对话约 15 个工具互相矛盾。” | “48 个是底层全量储备（Inventory），约 15 个是遵循最小特权原则投射给日常开发的主对话工作集（Working Set）。” |
+
+---
+
+## 四、 跨文档交叉检验门控
+
+每次新增或修改笔记时，必须检查：
+1. **双链存在性**: 引用的 `[[filename|别名]]` 必须在库中真实存在。
+2. **体系联动一致**: 修改概念必须同步检查文末 `## 🔗 体系联动`，保证两两双向引用。
+3. **保护个人认知真实性与留白**: 严禁 AI 擅自填平作者标注的“后续需要继续了解其机制”等学习前沿标记。知识库必须始终忠实映射人类作者真正理解的心智模型，而非 AI 生成的未经内化的文本。

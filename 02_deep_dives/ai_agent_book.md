@@ -280,6 +280,7 @@ LLM 获得完整的上下文与客观事实后，整合信息生成面向用户�
 
 ## 🔗 体系联动
 
+- [[tool_explosion_and_governance|工具爆炸（Tool Explosion）与上下文治理：以 Cursor 工业实践为例]]（方案 C 两阶段元发现与大文本防爆舱的标杆级工业实践）
 - [[harness_definition|Harness 的精确定义与组件清单（含背压与循环机制）]]
 - [[mcp_architecture_and_protocol|MCP 架构定位、底层通信与工程落地深度解析]]
 - [[coding_agent_architecture|Coding Agent 核心架构与主流厂商方案对比]]

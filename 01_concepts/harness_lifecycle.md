@@ -53,6 +53,9 @@
 
 ---
 
-## 🔗 关联阅读
+## 🔗 体系联动
+
 - [[harness_definition|Harness 的精确定义与组件清单（含背压机制）]]
 - [[coding_agent_architecture|Coding Agent 核心架构与主流厂商方案对比]]
+- [[mcp_architecture_and_protocol|MCP 架构定位、底层通信与工程落地深度解析]]
+- [[tool_explosion_and_governance|工具爆炸（Tool Explosion）与上下文治理：以 Cursor 工业实践为例]]

@@ -90,3 +90,12 @@ use 10k tokens... <具体任务描述>
 
 ## 🖼️ 架构全景速查
 ![Claude Harness Overview](../assets/Screenshot%202026-07-16%20at%2007.05.03.png)
+
+---
+
+## 🔗 体系联动
+
+- [[harness_definition|Harness 的精确定义与组件清单（含背压与 Ralph Loop 拦截机制）]]
+- [[coding_agent_architecture|Coding Agent 核心架构与主流厂商方案对比]]
+- [[harness_lifecycle|Harness 生命周期与通用运行时 vs 项目特化配置]]
+- [[tool_explosion_and_governance|工具爆炸（Tool Explosion）与上下文治理：以 Cursor 工业实践为例]]

@@ -29,3 +29,13 @@ Coding Agent 从早期的单轮自动补全演进为今日包含**沙箱环境�
 - **核心特色**：**Dynamic Workflows** 机制，现场由主 Agent 动态生成用过即弃的 JavaScript 编排脚本。
 - **状态交接**：基于物理工件（Plan.md、Git 提交记录、测试门控）进行物理状态的显式交接。
 - **详见笔记**: [[anthropic_dynamic_workflows|Anthropic Dynamic Workflows 深度解析]]
+
+---
+
+## 🔗 体系联动
+
+- [[harness_definition|Harness 的精确定义与组件清单（含背压机制与三大 Handoff 流派）]]
+- [[harness_lifecycle|Harness 生命周期与通用运行时 vs 项目特化配置]]
+- [[anthropic_dynamic_workflows|Anthropic Dynamic Workflows 深度解析与 6 大 Harness Pattern]]
+- [[tool_explosion_and_governance|工具爆炸（Tool Explosion）与上下文治理：以 Cursor 工业实践为例]]
+- [[ai_agent_book|《AI Agent Book》精读笔记与真实 API 工具调用闭环]]

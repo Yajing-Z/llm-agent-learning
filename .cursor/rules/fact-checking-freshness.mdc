@@ -1,0 +1,41 @@
+---
+description: Verification guidelines for technical accuracy, freshness, protocol specs, and anti-hallucination.
+globs: **/*.md
+alwaysApply: false
+---
+
+# Fact-Checking & Technical Freshness Guidelines (技术准确性与时效保鲜规范)
+
+本规则旨在确保知识库中所有架构原理解析、通信报文、内置工具列表及厂商实现均具备绝对真实性与前沿时效性，杜绝因协议迭代产生的陈旧过时与模型幻觉。
+
+---
+
+## 一、 一手事实来源与反幻觉基准
+
+1. **协议规范校验 (Protocol Grounding)**:
+   - **MCP 协议**: 必须对齐官方最新 Model Context Protocol 规范。基准版本为 `2024-11-05`，通信协议为 JSON-RPC 2.0。传输通道包括 `stdio` 与 `streamable-http`。三大原语包括 `Resources` (只读), `Prompts` (工作流模版), `Tools` (外部副作用动作)。
+   - **Wire-Level 报文真实性**: 文档中展示的 JSON 报文（如 `tools/list`, `tools/call`, `initialize`）入参字段与响应格式必须与真实协议完全吻合，不得简写关键结构字段。
+
+2. **Cursor 工业实现校验 (Cursor Host Reality)**:
+   - 原生元工具命名严格为 `GetDynamicTools` 和 `CallDynamicTool`。
+   - 内置工具集（如 `Read`, `Write`, `Grep`, `Shell`, `ReadLints` 等）名称严禁出现大小写混淆或臆造名称。
+   - 工具目录标签严格为 `<dynamic_tool_catalog>`，协议使用约束标签严格为 `<dynamic_tools>`。
+
+3. **主流厂商前沿演化 (Vendors Evolution)**:
+   - **Anthropic**: 动态编排采用 Dynamic Workflows（动态生成临时 JS 编排脚本），涉及 6 大 Pattern。
+   - **OpenAI**: 分布式移交采用 OpenAI Agents SDK（前身 Swarm）。
+   - **LangChain**: 图编排采用 LangGraph / StateGraph。
+
+---
+
+## 二、 时效性与版本防衰退 (Version Freshness)
+
+1. **版本演进标注**:
+   - 当某项技术经历架构换代时（例如 Cursor 从 V0 平铺到 V1 虚拟文件系统再到 V2 动态元代理），必须显式记录演进轨迹，而不是抹去历史或将旧方案当做现状。
+2. **时效过时标记**:
+   - 如果某项机制或 API 已被弃用或重构，需使用弃用标记明确标注：
+     ```markdown
+     > ⚠️ **历史版本说明 / 已废弃**: 以下内容为 V1 阶段实现，现行版本已迁移至 V2...
+     ```
+3. **真实环境凭据锚定**:
+   - 鼓励在深度解析文档中保留真实的实体工件证据（如工件文件路径、 Keychain 加密机制、报文抓包证据），增强工程说服力。

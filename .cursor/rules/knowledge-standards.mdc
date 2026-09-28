@@ -1,0 +1,51 @@
+---
+description: Standards for formatting, Obsidian bidirectional links, images, and structure in Markdown notes.
+globs: **/*.md
+alwaysApply: false
+---
+
+# Knowledge Base Standards (知识库格式与双链规范)
+
+本规则规范全库 Markdown 文档的排版、双向链接、图片引用及图谱联动，确保在 Obsidian 与 GitHub 中均具备最优渲染与知识拓扑体验。
+
+---
+
+## 一、 Obsidian 双向链接与知识图谱规范
+
+1. **链接语法**:
+   - 必须采用 `[[目标文件名|显示文本]]` 或 `[[目标文件名]]`。
+   - **严禁带有扩展名**: 目标文件名不得写为 `[[file.md]]`，必须写为 `[[file]]`。
+   - 目标文件必须在当前仓库中实际存在。
+
+2. **体系联动门控 (System Linkage)**:
+   - 凡处于 `01_concepts/` 与 `02_deep_dives/` 的核心笔记，文末必须设立一级/二级小节：
+     ```markdown
+     ## 🔗 体系联动
+     - [[related_doc_1|别名 1]]（关联简要说明）
+     - [[related_doc_2|别名 2]]（关联简要说明）
+     ```
+   - 至少双向关联两篇已有笔记，确保 Obsidian 图谱视图（Graph View）无孤岛节点。
+
+3. **MOC (Map of Content) 同步**:
+   - 若新增文档或重命名文档，必须同步更新根目录 `README.md` 的架构全景 Mermaid 流程图与核心表格索引。
+
+---
+
+## 二、 静态资源与排版规范
+
+1. **图片资源存放与引用**:
+   - 所有架构图、时序图、截图均存放在根目录 `assets/` 下。
+   - 子目录（如 `01_concepts/`、`02_deep_dives/`）中的引用路径统一为相对路径：
+     `![描述](../assets/filename.png)`。
+   - 根目录 `README.md` 中的引用路径统一为 `./assets/filename.png`。
+
+2. **数学公式规范**:
+   - 行内公式使用 `\( ... \)` 或 `$ ... $`。
+   - 块级独立公式使用 `\[ ... \]` 或 `$$ ... $$`。
+
+3. **Mermaid 流程图**:
+   - 优先使用 Mermaid 渲染架构演进与时序通信，节点文字清晰，避免过深嵌套。
+
+4. **尊重学习者的认知边界与留白**:
+   - 笔记真实记录用户的学习与理解进度。文中的“（后续需要继续了解其机制）”或学习标记是作者本人的认知探索前沿，AI 绝对禁止擅自代笔将其抹平或填补。
+   - 如需探讨未决技术点，应在对话中协助用户理解，由用户决定是否以及如何沉淀到笔记中。

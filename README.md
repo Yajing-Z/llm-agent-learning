@@ -83,6 +83,11 @@ llm-agent-learning/
 │   ├── Screenshot 2026-07-15 at 18.11.37.png
 │   └── Screenshot 2026-07-16 at 07.05.03.png
 │
+├── .cursor/                             # 🛡️ Cursor 治理配置 (Rules & Skills)
+│   ├── rules/                           # 认知与自洽护栏 (.mdc 规范规则)
+│   └── skills/                          # 对抗性审计技能 (audit-knowledge-base 等)
+│
+├── AGENTS.md                            # 📜 Agent 行为公约与黄金法则 (≤60行)
 ├── README.md                            # 🗺️ 知识库全景导航 (MOC)
 └── .gitignore                           # Git 忽略配置
 ```
