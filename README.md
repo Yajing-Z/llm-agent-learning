@@ -21,16 +21,14 @@ graph TD
         CA["Coding Agent 架构演进<br/>(OpenAI vs Anthropic 方案)"]:::concept
     end
 
-    subgraph C2["02 · 精读笔记与权威论文 (Articles & Notes)"]
+    subgraph C2["02 · 机制深度剖析与专题精读 (Deep Dives)"]
         ADW["Anthropic Dynamic Workflows<br/>(Harness Pattern & 编排脚本)"]:::practice
         BOOK["AI Agent Book 精读<br/>(Wire-level 工具调用闭环)"]:::practice
-        ADP["Agentic Design Patterns<br/>(经典设计模式权威论文)"]:::practice
     end
 
     HD --> MCP --> TE --> HL --> CA
     CA --> ADW
     HD --> BOOK
-    CA --> ADP
 ```
 
 ---
@@ -50,14 +48,13 @@ graph TD
 
 ---
 
-### 📚 02. 精读笔记与论文研读 (`02_articles_notes/`)
-> 追踪前沿厂商生产实践与经典设计模式，拆解 Wire-Level 工具调用底层机制。
+### 🔬 02. 机制深度剖析与专题精读 (`02_deep_dives/`)
+> 追踪前沿厂商生产实践与底层通信协议，拆解 Wire-Level 工具调用底层机制与动态工作流编排。
 
 | 文档 | 核心要点 / Takeaway | 关键机制 |
 | :--- | :--- | :--- |
-| [Anthropic Dynamic Workflows 深度解析](./02_articles_notes/anthropic_dynamic_workflows.md) | 解决偷懒/自评偏差/目标漂移；Claude 动态生成用过即弃的 JS 编排脚本；**6 大 Harness Pattern**（分类分流、扇出汇总、对抗性验证等） | `Dynamic Workflows`, `Adversarial Verify`, `Fan-out` |
-| [《AI Agent Book》精读笔记](./02_articles_notes/ai_agent_book.md) | 四大工具体系剖析；**Wire-level 真实 API 工具调用闭环**（Schema 注册、tool_calls 挂起、回填与 stop 终态） | `Tool Use`, `Wire-level API`, `Event Trigger` |
-| `Agentic-Design-Patterns.pdf` | 吴恩达等学者的 Agentic 经典设计模式论文合集（Reflection, Tool Use, Planning, Multi-agent） | `Design Patterns`, `Reflection`, `Planning` |
+| [Anthropic Dynamic Workflows 深度解析](./02_deep_dives/anthropic_dynamic_workflows.md) | 解决偷懒/自评偏差/目标漂移；Claude 动态生成用过即弃的 JS 编排脚本；**6 大 Harness Pattern**（分类分流、扇出汇总、对抗性验证等） | `Dynamic Workflows`, `Adversarial Verify`, `Fan-out` |
+| [《AI Agent Book》精读笔记](./02_deep_dives/ai_agent_book.md) | 四大工具体系剖析；**Wire-level 真实 API 工具调用闭环**（Schema 注册、tool_calls 挂起、回填与 stop 终态） | `Tool Use`, `Wire-level API`, `Event Trigger` |
 
 ---
 
@@ -72,8 +69,7 @@ llm-agent-learning/
 │   ├── harness_lifecycle.md             # Harness 生命周期与 Runtime / Config 解耦
 │   └── coding_agent_architecture.md     # Coding Agent 架构演进与 OpenAI/Anthropic 方案对比
 │
-├── 02_articles_notes/                   # 📚 精读笔记与论文 (已深入消化)
-│   ├── Agentic-Design-Patterns.pdf      # Agentic 设计模式权威论文
+├── 02_deep_dives/                       # 🔬 机制深度剖析与专题精读 (已深入消化)
 │   ├── ai_agent_book.md                 # 《AI Agent Book》精读：四大工具体系与 Wire-Level 工具调用闭环
 │   └── anthropic_dynamic_workflows.md   # Anthropic Dynamic Workflows 与 6 大 Pattern 深度解析
 │
