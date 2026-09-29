@@ -21,6 +21,9 @@ Coding Agent 从早期的单轮自动补全演进为今日包含**沙箱环境�
 
 - **核心机制**：去中心化 Handoff 机制，Subagent A 直接移交给 Subagent B。
 - **协议支撑**：依赖专用的 Agents SDK 协议进行通信与控制流转移。
+- **开源实现逆向**：
+  - [[openai_codex_architecture|OpenAI Codex 全景架构：基于 codex-rs 的工业级 Harness 解析]]
+  - [[openai_codex_cli|OpenAI Codex CLI 逆向：瘦外壳与双重运行形态]]
 
 ---
 
@@ -36,6 +39,8 @@ Coding Agent 从早期的单轮自动补全演进为今日包含**沙箱环境�
 
 - [[harness_definition|Harness 的精确定义与组件清单（含背压机制与三大 Handoff 流派）]]
 - [[harness_lifecycle|Harness 生命周期与通用运行时 vs 项目特化配置]]
+- [[openai_codex_architecture|OpenAI Codex 全景架构：基于 codex-rs 的工业级 Harness 解析]]
+- [[openai_codex_cli|OpenAI Codex CLI 逆向：瘦外壳与双重运行形态]]
 - [[anthropic_dynamic_workflows|Anthropic Dynamic Workflows 深度解析与 6 大 Harness Pattern]]
 - [[tool_explosion_and_governance|工具爆炸（Tool Explosion）与上下文治理：以 Cursor 工业实践为例]]
 - [[ai_agent_book|《AI Agent Book》精读笔记与真实 API 工具调用闭环]]

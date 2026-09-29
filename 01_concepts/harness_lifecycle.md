@@ -40,7 +40,7 @@
 解决循环依赖的最佳工程实践是将 Harness 划分为两层解耦架构：
 
 ### 维度 A：通用运行时层 (Runtime Layer)
-- **代表实现**：Claude Code、Codex CLI、OpenCode 等底层执行框架。
+- **代表实现**：Claude Code、[[openai_codex_architecture|Codex 全景架构]] 及 [[openai_codex_cli|Codex CLI 外壳]]、OpenCode 等底层执行框架。
 - **职责**：提供通用的子智能体编排（Orchestration）、MCP 协议通信、沙箱（Sandbox）隔离、Skill 动态加载、Handoff 状态机等。
 - **详见组件清单**: [[harness_definition|Harness 的精确定义与组件清单]]
 
@@ -57,5 +57,7 @@
 
 - [[harness_definition|Harness 的精确定义与组件清单（含背压机制）]]
 - [[coding_agent_architecture|Coding Agent 核心架构与主流厂商方案对比]]
+- [[openai_codex_architecture|OpenAI Codex 全景架构：基于 codex-rs 的工业级 Harness 解析]]
+- [[openai_codex_cli|OpenAI Codex CLI 逆向：瘦外壳与双重运行形态]]
 - [[mcp_architecture_and_protocol|MCP 架构定位、底层通信与工程落地深度解析]]
 - [[tool_explosion_and_governance|工具爆炸（Tool Explosion）与上下文治理：以 Cursor 工业实践为例]]
