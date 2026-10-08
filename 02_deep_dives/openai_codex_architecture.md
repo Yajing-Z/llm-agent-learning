@@ -71,7 +71,7 @@ graph TD
 | **用户界面** | `codex-tui` | 基于 Ratatui 构建的高性能异步终端 UI；支持流式 Markdown、语法高亮与按键中断。 | *[待探索]* |
 | **智能体中枢** | `codex-core` | 负责完整的 Agent Loop：Prompt 装配、模型调用、工具选择。严格执行上下文治理（单项不超过 10K Tokens、禁止历史重写）。 | *[待探索]* |
 | **协议服务端** | `codex-app-server` | 暴露标准 JSON-RPC v2 API，负责将 Agent 会话能力解耦暴露给 IDE 插件（如 VS Code/Cursor）或云端远程控制。 | *[待探索]* |
-| **安全沙箱** | `codex-sandboxing` | 跨平台操作系统级防爆屏障：macOS（Seatbelt）、Linux（Landlock + Namespaces）、Windows（受限令牌与作业对象）。 | *[待探索]* |
+| **安全沙箱** | `codex-sandboxing` | 跨平台操作系统级防爆屏障：macOS（Seatbelt）、Linux（Landlock + Namespaces）、Windows（受限令牌与作业对象）。 | [[openai_codex_sandbox|沙箱配置与网络隔离生命周期]] |
 | **执行引擎** | `codex-exec`<br/>`codex-exec-server` | 驱动单次任务批处理、Code Review 自动化门禁，以及作为分布式 Worker 节点运行。 | *[待探索]* |
 
 ---
@@ -113,8 +113,8 @@ graph TD
 
 Codex 的架构庞大而精密，后续将按子系统逐步展开深入逆向：
 - 🟢 **第一篇·入口与外壳**：[[openai_codex_cli|OpenAI Codex CLI 逆向：瘦外壳与双重运行形态]] *(已深入消化)*
-- ⚪ **第二篇·核心循环与上下文**：`openai_codex_core.md` *(待后续学习探索)*
-- ⚪ **第三篇·跨平台沙箱隔离**：`openai_codex_sandboxing.md` *(待后续学习探索)*
+- 🟢 **第二篇·安全沙箱与网络隔离**：[[openai_codex_sandbox|OpenAI Codex 沙箱机制：配置模型、跨平台内核隔离与网络生命周期]] *(已深入消化)*
+- ⚪ **第三篇·核心循环与上下文**：`openai_codex_core.md` *(待后续学习探索)*
 - ⚪ **第四篇·协议服务端与 RPC**：`openai_codex_app_server.md` *(待后续学习探索)*
 
 ---
@@ -122,6 +122,7 @@ Codex 的架构庞大而精密，后续将按子系统逐步展开深入逆向�
 ## 🔗 体系联动
 
 - [[openai_codex_cli|OpenAI Codex CLI 逆向：瘦外壳与双重运行形态]]
+- [[openai_codex_sandbox|OpenAI Codex 沙箱机制：配置模型、跨平台内核隔离与网络生命周期]]
 - [[coding_agent_architecture|Coding Agent 核心架构与主流厂商方案对比]]
 - [[harness_definition|Harness 的精确定义与组件清单（含背压机制）]]
 - [[harness_lifecycle|Harness 生命周期与 Model/Project 关系辨析]]

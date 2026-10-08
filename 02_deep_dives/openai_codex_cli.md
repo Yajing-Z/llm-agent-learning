@@ -120,6 +120,7 @@ Rust 标准库只提供语言级的 `async/await` 语法和 `Future` 抽象，�
 ## 🔗 体系联动
 
 - [[openai_codex_architecture|OpenAI Codex 全景架构：基于 codex-rs 的工业级 Harness 解析]]
+- [[openai_codex_sandbox|OpenAI Codex 沙箱机制：配置模型、跨平台内核隔离与网络生命周期]]
 - [[harness_definition|Harness 的精确定义与组件清单（含背压机制）]]
 - [[harness_lifecycle|Harness 生命周期与 Model/Project 关系辨析]]
 - [[coding_agent_architecture|Coding Agent 核心架构与主流厂商方案对比]]

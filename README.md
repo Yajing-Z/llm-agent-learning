@@ -26,12 +26,14 @@ graph TD
         BOOK["AI Agent Book 精读<br/>(Wire-level 工具调用闭环)"]:::practice
         CODEX_ARCH["OpenAI Codex 全景架构<br/>(工业级四层解耦架构)"]:::practice
         CODEX_CLI["OpenAI Codex CLI 逆向<br/>(瘦外壳 & 双重运行形态)"]:::practice
+        CODEX_SANDBOX["OpenAI Codex 沙箱机制<br/>(内核隔离 & 代理生命周期)"]:::practice
     end
 
     HD --> MCP --> TE --> HL --> CA
     CA --> ADW
     CA --> CODEX_ARCH
     CODEX_ARCH --> CODEX_CLI
+    CODEX_ARCH --> CODEX_SANDBOX
     HD --> BOOK
 ```
 
@@ -61,6 +63,7 @@ graph TD
 | [《AI Agent Book》精读笔记](./02_deep_dives/ai_agent_book.md) | 四大工具体系剖析；**Wire-level 真实 API 工具调用闭环**（Schema 注册、tool_calls 挂起、回填与 stop 终态） | `Tool Use`, `Wire-level API`, `Event Trigger` |
 | [OpenAI Codex 全景架构：基于 codex-rs 的工业级 Harness 解析](./02_deep_dives/openai_codex_architecture.md) | 系统性解构 `codex-rs` **四层工业级解耦架构**（外壳调度、核心上下文、服务协议、物理沙箱）；端到端执行数据流与 Harness 核心启示 | `Full Architecture`, `codex-rs`, `Layered Harness`, `Sandbox Loop` |
 | [OpenAI Codex CLI 逆向：瘦外壳与双重运行形态](./02_deep_dives/openai_codex_cli.md) | 深入 `codex-cli` 源码；**普通运行 vs 影子辅助运行（Arg0 Trick）**；`main()` 启动三部曲与环境设防；Tokio 异步调度中枢与 SQLite 自愈回路 | `Thin Harness Shell`, `Arg0 Trick`, `Tokio Runtime`, `Self-Healing` |
+| [OpenAI Codex 沙箱机制：配置模型、跨平台内核隔离与网络生命周期](./02_deep_dives/openai_codex_sandbox.md) | 跨平台操作系统级防爆屏障（macOS Seatbelt vs Linux Bubblewrap 跨 NetNS 路由桥）；零配置冷启动事实；网络沙箱动态自愈与审批生命周期闭环 | `OS Sandbox`, `Bubblewrap`, `Seatbelt`, `Network Proxy`, `AskForApproval` |
 
 ---
 
@@ -79,7 +82,8 @@ llm-agent-learning/
 │   ├── ai_agent_book.md                 # 《AI Agent Book》精读：四大工具体系与 Wire-Level 工具调用闭环
 │   ├── anthropic_dynamic_workflows.md   # Anthropic Dynamic Workflows 与 6 大 Pattern 深度解析
 │   ├── openai_codex_architecture.md     # OpenAI Codex 全景架构：基于 codex-rs 的工业级 Harness 四层解耦架构
-│   └── openai_codex_cli.md              # OpenAI Codex CLI 逆向：瘦外壳、双重运行形态与启动三部曲
+│   ├── openai_codex_cli.md              # OpenAI Codex CLI 逆向：瘦外壳、双重运行形态与启动三部曲
+│   └── openai_codex_sandbox.md          # OpenAI Codex 沙箱机制：配置模型、跨平台内核隔离与网络生命周期
 │
 ├── assets/                              # 🖼️ 架构图与资源图库
 │   ├── adversarial-verify.png
