@@ -1,71 +1,78 @@
 ---
 name: audit-knowledge-base
-description: Audit knowledge base notes for conceptual consistency, contradictory claims across documents, broken Obsidian bidirectional links, missing system linkages, and tracking learning backlogs. Use when the user asks to audit the repository, verify notes, inspect concept consistency, or check for knowledge gaps.
+description: Audit the knowledge base or multiple notes for factual and conceptual consistency, links, images, system linkages, and learning backlogs. Use for repository-wide or cross-document audits; use fact-check-freshness for focused technical claim verification.
 ---
 
 # Knowledge Base Audit (知识库自洽性与完整性审计技能)
 
-本技能用于对《LLM Agent & Harness Engineering》知识库进行全维度的概念自洽性、双向链接完整度及认知前沿审计。
-**完全基于 Agent 原生工具（Glob、Grep、Read），不依赖任何外置脚本。**
+本技能组织全库或跨文档审计。先读取以下规则，执行步骤不另行定义技术判据：
+
+- [概念边界](../../rules/concept-consistency.mdc)：术语与机制的区别。
+- [事实核验与状态判定](../../rules/fact-checking-freshness.mdc)：证据、版本、核验状态和报告字段。
+- [知识库格式](../../rules/knowledge-standards.mdc)：链接、图片与体系联动要求。
+
+文件结构检查使用 Agent 原生工具（Glob、Grep、Read 或等效工具），不依赖任何外置脚本。审计默认只读；已有明确修改授权时按其范围执行，用户要求先审批时先展示拟修改内容。保护作者认知留白。
 
 ---
 
 ## 🚀 快速执行工作流 (Workflow)
 
-当用户发起知识库审计请求时，Agent 按以下四阶段执行：
+当用户发起知识库审计请求时，Agent 按以下流程执行：
 
 ```text
-[阶段 1: 原生工具扫描双向链接与图谱联动 (Glob / Grep)]
-        │
-        ▼
-[阶段 2: 核心概念自洽性审查 (对比 concept-consistency 规则)]
-        │
-        ▼
-[阶段 3: 认知前沿与学习待办梳理 (仅列出，绝不代笔)]
-        │
-        ▼
-[阶段 4: 输出结构化审计报告]
+1. 盘点文件、图片、链接与适用规则
+2. 提取关键断言、适用版本和引用来源
+3. 对照一手证据核验；同时检查规则自身的技术断言
+4. 检查文内与跨文档矛盾
+5. 单独汇总认知留白，不补写
+6. 输出问题位置、证据、影响和修改建议
 ```
 
 ---
 
-## 步骤 1：原生工具检查客观工程质量
+## 步骤 1：盘点文件、图片、链接与适用规则
 
-使用内置工具进行扫描：
+说明实际扫描范围，包括纳入的规则和技能。使用内置工具检查：
 
 1. **扫描双向链接完整性**：
    - 使用 `Glob` 收集工作区内所有 Markdown 文件名清单（如 `harness_definition.md`）；
-   - 使用 `Grep` 提取所有笔记中的 `\[\[([a-zA-Z0-9_\-]+)` 引用目标；
+   - 使用 `Grep` 或等效工具提取笔记链接，处理路径、中文文件名、别名、标题锚点及表格中的转义符；
    - 比对是否存在引用了不存在的文件（死链）。
+   - 分别报告死链、未显式互引和互引覆盖情况；Obsidian 自动反链不等于正文已写反向引用。
 2. **扫描体系联动章节**：
    - 检查 `01_concepts/` 与 `02_deep_dives/` 下的各文件，确认文末均包含 `## 🔗 体系联动`。
+   - 按知识库格式规则检查至少关联两篇已有笔记及显式互引要求，报告实际覆盖情况。
 3. **扫描图片资产有效性**：
-   - 检查文档中的 `![alt](../assets/xxx.png)` 是否在 `assets/` 真实存在。
+   - 解析图片路径中的 URL 编码，相对当前文件检查图片是否存在。
+   - 检查图片内容是否支持附近文字，不能仅以文件存在判定引用有效。
 
 ---
 
-## 步骤 2：核心三大概念冲突审查 (Consistency Audit)
+## 步骤 2：提取关键断言、适用版本和引用来源
 
-比对全库文档是否符合 `.cursor/rules/concept-consistency.mdc` 裁决基准：
+把待核验内容拆为可独立判断的断言，记录原文位置、适用范围和已有来源。优先覆盖协议报文、安全保证、定量结论及跨文档共用概念；规则自身的技术断言也纳入待核验内容，不能作为正确答案。
 
-### 1. Handoff（智能体移交）三流派审查
-- [ ] **Anthropic**: 是否明确强调以“物理工件（Plan.md、Git commit、测试门控）”为跨会话载体？
-- [ ] **OpenAI**: 是否明确指出其为“去中心化控制流移交（Agents SDK）”？
-- [ ] **LangChain**: 是否明确指出其为“StateGraph 类型化字典（Typed State）”流转？
-- [ ] **冲突排查**: 任何文档不得将 Anthropic 物理工件流转与 OpenAI SDK 移交混淆。
-
-### 2. Anthropic 双 Harness 场景审查
-- [ ] **长程任务 (SWE-bench)**: 是否阐述了 Initializer 启动、物理工件追踪与 Ralph Loop 拦截退出？
-- [ ] **单会话编排 (Dynamic Workflows)**: 是否阐明了 Claude 现场动态生成用过即弃的 JavaScript 编排脚本与 6 种 Harness Pattern？
-- [ ] **冲突排查**: 确认未将单会话临时编排脚本误解为“替代了物理工件”，二者是局部并发与全局持久的正交关系。
-
-### 3. 工具爆炸治理与 Cursor 工业实践映射
-- [ ] `02_deep_dives/ai_agent_book.md` 中的理论三大方案（Tool RAG、Sub-Agents、两阶段元发现）是否与 `01_concepts/tool_explosion_and_governance.md` 中的 Cursor 工业落地四道防线形成相互映射？
-- [ ] 确认未将 Cursor 的实现误述为向量检索（Tool RAG）。
+区分作者的技术断言与明确的待学习问题，后者交由步骤 5 汇总。无法覆盖的内容在报告中说明。
 
 ---
 
-## 步骤 3：认知前沿与学习待办梳理 (Learning Backlog Tracking)
+## 步骤 3：对照一手证据核验
+
+按事实核验规则收集直接证据并判定状态；需要深入核验的断言使用 [技术事实核验流程](../fact-check-freshness/SKILL.md)。沿用其证据记录，不重复编造一份核验结果。
+
+规则与证据冲突时，把规则问题作为发现记录。引用无法访问或不能支持结论时，说明核验限制。
+
+---
+
+## 步骤 4：检查文内与跨文档矛盾
+
+对照同一概念的各处表述，先核对适用范围，再依概念边界检查机制是否混同，并按共享核验状态分类。相反表述不必然矛盾；证据不足时不强行选定其中一处为正确答案。
+
+Handoff、长程状态恢复、动态工作流与工具治理仍是重点，但不以出现某个固定术语或实现组合作为通过条件。
+
+---
+
+## 步骤 5：单独汇总认知留白，不补写
 
 使用 `Grep` 检索作者标注的认知前沿与探索标记：
 - `后续需要继续了解其机制`
@@ -78,26 +85,37 @@ description: Audit knowledge base notes for conceptual consistency, contradictor
 
 ---
 
-## 步骤 4：生成标准审计报告模板
+## 步骤 6：输出问题位置、证据、影响和修改建议
+
+按事实核验规则的状态与字段填写实际结果；结构检查同时引用对应格式要求。不预设满分、零缺陷或全部通过；未定义评分方法时，不设综合分数。
 
 ```markdown
 # 知识库综合审计报告 (Audit Report)
 
-## 📊 总体工程健康度: [100/100]
+## 扫描范围与核验限制
+填写扫描对象、核验日期、源码版本及未能核验的范围。
 
-## 1. 原生双链与图谱检查 (客观工程层)
-- 扫描文档: X 篇
-- 双链死链: 0 处
-- 本地图片资源: 100% 有效
-- 体系联动覆盖率: 100%
+## 实际结构检查结果
+填写文档数、死链、图片有效性、体系联动及互引覆盖情况。
 
-## 2. 概念自洽性审查结果 (逻辑层)
-- Handoff 机制对齐: ✅ 一致
-- Anthropic 双场景解耦: ✅ 一致
-- 工具治理理论与工业落地映射: ✅ 一致
+## 已确认错误
+按共享报告字段记录错误及反证。
 
-## 3. 📌 认知前沿与学习待办 (Learning Backlog - 仅呈现，非缺陷)
-- 01_concepts/harness_definition.md:
-  • OpenAI 的 handoff 去中心化交接机制待深入了解
-  • LangChain 的 StateGraph 状态图流转机制待深入了解
+## 已确认矛盾
+记录文内或跨文档的冲突位置、适用范围和判定依据。
+
+## 适用范围差异
+说明版本、配置、场景或计数口径差异，按需附版本说明。
+
+## 证据不足／待复核
+填写缺失证据与核验限制，不猜测结论。
+
+## 核验通过的范围
+简述已核验的断言范围和证据，不推及未检查内容。
+
+## 认知前沿与学习待办
+仅汇总作者标记，非缺陷，不补写。
+
+## 建议修改项及优先级
+列出具体修改范围、建议及优先级，按用户授权进入修复。
 ```

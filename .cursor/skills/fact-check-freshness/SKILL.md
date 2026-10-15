@@ -1,58 +1,28 @@
 ---
 name: fact-check-freshness
-description: Audit technical accuracy, temporal freshness, and protocol alignment for LLM Agent & Harness Engineering concepts. Use when checking whether notes are outdated, verifying MCP protocol specifications, inspecting Cursor runtime architecture, or comparing framework implementations (OpenAI, Anthropic, LangChain).
+description: Verify specific technical claims or a set of claims against primary specifications, official documentation, versioned source, or runtime artifacts. Use for protocol, implementation, security, and freshness checks; use audit-knowledge-base for whole-repository and cross-document audits.
 ---
 
 # Technical Fact-Checking & Freshness Audit (技术准确性与时效保鲜审计)
 
-本技能用于对知识库的技术事实、协议版本、线缆级报文及架构实现进行穿透式核验，防止文档陈旧化与概念失真。
+本技能核验单项或一组技术断言。先读取 [事实核验规则](../../rules/fact-checking-freshness.mdc)，采用其中的证据要求、核验状态与报告字段；涉及机制混同时再读取 [概念边界](../../rules/concept-consistency.mdc)。本技能只定义执行流程，不复制技术判据。
+
+全库或跨文档审计由 [综合审计技能](../audit-knowledge-base/SKILL.md) 组织；单项核验无需执行其全库扫描。
 
 ---
 
-## 🔍 关键核验清单 (Audit Checklists)
+## 核验流程
 
-### 1. MCP (Model Context Protocol) 规范核验
-
-- [ ] **基准版本**: 协议基准版本是否明确标为 `2024-11-05`？
-- [ ] **传输通道**: 是否明确区分了本地 `stdio` 与远程 `streamable-http`（或 SSE）？
-- [ ] **三大原语完整性**: 是否完整涵盖 `Resources`（只读数据）、`Prompts`（用户触发模版）与 `Tools`（具有外部副作用的动作）？
-- [ ] **解耦事实**: 是否清晰强调 **LLM 不跑 MCP 协议**，而是由 Host 宿主（如 Cursor）将 MCP inputSchema 转译为 LLM tools Schema？
-- [ ] **Wire-Level 报文**: `initialize`、`tools/list`、`tools/call` 的 JSON-RPC 2.0 报文字段是否符合官方 Spec？
+1. **定位断言与范围**：记录待核验原文及位置，拆分其中可独立判断的结论；确认版本、产品、运行形态、配置和观察时间。范围不明时保留不确定项。
+2. **取得直接证据**：协议断言打开对应版本的规范章节；实现断言查看固定版本源码的定义、配置入口及调用路径；运行行为查看与断言相关的脱敏工件；结构、语法或数学问题记录可复现的检验过程。只读相关资料，记录取不到的证据。
+3. **对齐证据与结论**：逐项说明证据支持或否定原文的哪一部分。默认行为要核对启用条件和分支；运行工件只支持其观察范围。避免仅因来源出现相关术语就认定结论成立。
+4. **判定核验状态**：使用事实核验规则第四节的分类。证据相互冲突时说明冲突范围与未决条件，不凭模型熟悉程度裁决；学习留白单独记录。
+5. **输出发现与建议**：使用共享报告字段，对每个独立断言给出状态、证据及支持关系和建议。仅输出所请求的核验范围；综合审计可直接复用这些记录。
 
 ---
 
-### 2. Cursor 宿主运行时与工具治理事实核验
+## 执行边界
 
-- [ ] **元工具网关**: 代理外部 MCP 的宿主内置工具是否准确写为 `GetDynamicTools` 与 `CallDynamicTool`？
-- [ ] **提示词目录标签**: XML 索引标签是否准确为 `<dynamic_tool_catalog>`，行为协议标签是否准确为 `<dynamic_tools>`？
-- [ ] **内置工具清单**: 主会话工作集（~15个）与底层全量储备（48个）的关系是否阐述清晰？是否严格遵循最小特权原则？
-- [ ] **防爆舱工件**: 大报文转储路径是否准确对应 `~/.cursor/projects/.../agent-tools/*.txt` 机制？
-- [ ] **安全存储**: 是否真实还原 Electron `safeStorage` 与 macOS Keychain 硬件保护的 OAuth Token 注入流程？
+审计请求默认只读，输出发现及修改建议。已有明确修改授权时按其范围执行；用户要求先审批时，先展示具体修改范围与拟替换内容，批准后再写入文件。
 
----
-
-### 3. 主流前沿厂商方案时效性核验
-
-- [ ] **Anthropic**:
-  - Dynamic Workflows 编排机制（临时 JS 脚本生成、`agent()` 调度、6 大 Harness Pattern）。
-  - 长程任务的物理工件流转（Initializer、`Plan.md`、Ralph Loop 退出拦截）。
-- [ ] **OpenAI**:
-  - 去中心化 Handoff 机制依托专用的 OpenAI Agents SDK。
-  - 函数调用中的字符串反序列化与多工具并发（Parallel Tool Calling）。
-- [ ] **LangChain / LangGraph**:
-  - 基于有向状态图（StateGraph）的节点流转与类型化字典（Typed State）。
-
----
-
-## 🛠️ 处置与修复流程
-
-当审计发现某部分内容过时或存在事实偏差时：
-
-1. **修正或版本标注**:
-   - 若属于描述笔误或失真，依据官方最新规范直接修正；
-   - 若属于技术架构升级（如 Cursor V0 -> V1 -> V2），保留演进过程并在旧方案处添加说明：
-     ```markdown
-     > ⚠️ **历史版本演进**: 该方案为早期实现，现行工业界标准已迭代为...
-     ```
-2. **凭据核对**:
-   - 优先通过本地可执行命令（如查看本地安装配置、抓包报文、官方 Spec）作为佐证，确保修改具有确定性。
+未决学习标记单独呈现，不作为必须填补的缺陷，不擅自代笔。核验限制按共享规则报告。
