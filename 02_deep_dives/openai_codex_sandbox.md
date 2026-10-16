@@ -271,20 +271,23 @@ graph TD
 
 ---
 
-### 3.3 动态白名单：会话内追加与持久化
+### 3.3 网络审批：单次允许、会话允许与长期规则
 
-白名单不是一成不变的死规则。当模型执行命令试图访问未经授权的新域名时，系统通过审批机制实现动态演进：
+当请求访问未获授权的网络目标时，如果当前策略和运行时允许发起审批，界面可以提供不同范围的授权选项：
 
-1. **挂起与弹窗确认**：
-    代理层截获到不在白名单中的请求时，将连接挂起，向用户前端弹出 `ApprovalAction::NetworkAccess` 审批卡片（展示目标域名、端口及请求协议）。
-2. **内存级即时放行（`proxy.add_allowed_domain`）**：
-    用户点击允许后，核心层调用 `proxy.add_allowed_domain(&host)`：
-  - 代理将新主机名插入运行时的 `allow_set` 并重新编译 `GlobSet`；
-  - 正在挂起的 TCP/TLS 连接被唤醒，立即建立连接出站。
-3. **规则库持久化（`ExecPolicy`）**：
-    系统通过 `exec_policy.append_network_rule_and_update(...)` 将该审批放行决策持久化保存至工作区规则文件（`.codex/`）：
-  - 该域名正式沉淀为该项目的长期合规白名单；
-  - 后续同一域名再次访问时，直接命中白名单进入稳态免审批通道。
+| 选项 | 含义 |
+| :--- | :--- |
+| **AllowOnce：仅本次允许** | 放行本次请求，不因此保存长期规则 |
+| **AllowForSession：本会话允许** | 在当前会话内复用该目标的授权，不等于下次会话仍然有效 |
+| **允许以后访问该主机** | 明确保存允许规则；成功保存后可跨会话生效 |
+
+**第三种选项并非每个客户端、每次弹窗都会提供。**在本次核验的 Codex CLI 源码快照（提交 `44fe510`，2026-09-28）中，它的界面文案是 “Yes, and allow this host in the future”，对应内部的网络策略修改决策 `NetworkPolicyAmendment`。界面根据审批请求中可用的决策生成选项，不能因为后端支持该决策，就断言当前客户端一定会展示它。如果弹窗只有前两个选项，就不能把点击“允许”理解成永久加入白名单。
+
+长期授权需要明确保存规则。笔记所引用的 `append_network_rule_and_update()` 将规则写入 `CODEX_HOME/rules/default.rules`，通常是 `~/.codex/rules/default.rules`，不能直接称为“当前项目 `.codex/` 下的规则”。也可以通过配置文件维护域名允许规则。
+
+保存后的规则仍受最终生效的网络权限和更高优先级策略约束；删除或修改规则也会改变后续访问行为。**单次批准、会话批准和保存长期规则是不同决策，不是点击一次“允许”后必然依次发生的三个步骤。**
+
+> **一手源码依据**：[CLI 审批选项文案](https://github.com/openai/codex/blob/44fe510ce3ee61c8ef623adcbf89b901c73ddd61/codex-rs/tui/src/bottom_pane/approval_overlay.rs#L883)、[默认可用决策的生成条件](https://github.com/openai/codex/blob/44fe510ce3ee61c8ef623adcbf89b901c73ddd61/codex-rs/protocol/src/approvals.rs#L365)、[规则保存路径](https://github.com/openai/codex/blob/44fe510ce3ee61c8ef623adcbf89b901c73ddd61/codex-rs/core/src/exec_policy.rs#L867)。
 
 ---
 
