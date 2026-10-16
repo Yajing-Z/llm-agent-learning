@@ -32,19 +32,21 @@
 
 ![Agent 执行沙箱的四维深水区模型](../assets/sandbox_agent_deep_water.png)
 
+> 图中的“Secret Zero”仅作为受管凭据隔离的设计目标；其启用条件、管理范围和例外以本文第 4 节为准，不代表整个沙箱中的所有机密均已归零。
+
 #### 四维深水区的工程对齐与认知跃迁
 
 | 隔离维度 | 表面层次（经典理论抽象） | 生产深水区（Agent Harness 真实落地） | 深度逆向解析 / 认知进度 |
 | :--- | :--- | :--- | :--- |
 | **① 文件隔离** | 限定可读 / 限定可写在工程目录内 | **元数据动态抠洞（Carveouts）+ 防 Git Hook 提权**：<br/>• 强制把 `.git`/`.codex` 等关键配置重挂为只读；<br/>• 内核级 `deny file-write-unlink` 锁死父目录，封死重命名改名逃逸。 | ✅ **已消化掌握**（详见本文第 5 节） |
-| **② 网络策略** | 允许必要连接 / 拦截未授权访问 | **Credential Broker 零机密中继 + SSRF 实时探针**：<br/>• 沙箱环境变量仅注入等长 Dummy Token（Secret Zero），出站透明替换；<br/>• 异步探针比对 RFC 全保留网段，双阶段复核封死 DNS Rebinding。 | ✅ **已消化掌握**（详见本文第 4 节、第 6 节） |
+| **② 网络策略** | 允许必要连接 / 拦截未授权访问 | **Credential Broker 受管凭据中继 + SSRF 实时探针**：<br/>• 启用 Broker 后，对识别并纳入管理的环境凭据实施 Dummy Token 虚拟化；本地连接等例外需另行核验；<br/>• 异步探针比对 RFC 全保留网段，双阶段复核封死 DNS Rebinding。 | ✅ **已消化掌握**（详见本文第 4 节、第 6 节） |
 | **③ 进程空间** | 隔离进程可见范围 / 限制权限 | **【待深入验证 ❓】特权剥夺与进程生命周期管控**：<br/>• 待验证：大模型脚本执行 sudo/setuid 时，OS 如何在内核级切断提权？<br/>• 待验证：不可信子进程后台常驻或失控时，Harness 如何确保全量回收进程树？ | ❓ **认知前沿待探索**（见文末第 7 节地标） |
 | **④ 资源限额** | CPU · 内存 · 磁盘 · 进程时长 | **【待深入验证 ❓】无 cgroups 环境下的资源护栏**：<br/>• 待验证：本地原生沙箱缺乏硬件级 cgroups 配额，如何防范 CPU/内存 DoS？<br/>• 待验证：除单次命令超时熔断与输出截断外，宿主是否还有更多防护？ | ❓ **认知前沿待探索**（见文末第 7 节地标） |
 
 ```
 💡 核心安全公理：
   1. Harness = Agent - Model （外壳接管不可信模型的所有物理动作）
-  2. Sandbox Secret Level = Secret Zero （沙箱内部机密为零，凭证可用但不可见）
+  2. Credential Broker 按配置隔离受管凭据，不保证沙箱中的所有机密归零
   3. Writable Workspace = Project \ Protected Metadata （工作区写权限强制抠除受保护元数据）
 ```
 
@@ -320,13 +322,20 @@ sequenceDiagram
 
 ---
 
-## 🔑 4. 凭据隔离机制：Credential Broker 与零机密沙箱
+## 🔑 4. 凭据隔离机制：Credential Broker 的管理范围与条件
 
 在 Agent 执行环境中，大模型编写的代码通常需要调用外部授权服务（如 `git push` 到 GitHub、调用内部模型 API 网关等）。如果简单地将 `GITHUB_TOKEN` 或 `OPENAI_API_KEY` 明文注入到沙箱的环境变量中，将带来极其致命的安全漏洞：大模型生成的不可信代码（或第三方 npm/pip 恶意依赖）只需一行 `printenv` 或 `cat` 即可彻底窃取机密。
 
-为了解决这一矛盾，Codex 在 `network-proxy` 模块中实现了 **Credential Broker（凭证中继与代理治理系统）**，其核心安全公理是：
-$$\text{Sandbox Secret Level} = \text{Secret Zero}$$
-**“子进程可用但不可见（Usable but Invisible）”**：沙箱内部的进程全程只能接触到无权限的**虚拟替身凭据（Dummy Token）**；真实的机密仅保存在宿主机受控进程内存中，在流量经由本地网络代理出站时，由代理透明完成请求头的校验与真实凭据注入。
+为降低子进程直接接触真实凭据的风险，Codex 在 `network-proxy` 模块中实现了 **Credential Broker（凭证中继与代理治理系统）**。在 Broker 已启用、凭据被 Provider 识别并纳入管理、且未触发真实凭据回退的情况下，传给子进程的相关凭据会被替换为 **Dummy Token**；受支持的请求经过代理并通过凭据匹配与授权检查后，再由代理注入真实凭据。
+
+**这是对受管凭据的有条件隔离，不是“整个沙箱零机密”的保证。**需要明确以下边界：
+
+- **启用条件**：本次核验的源码快照（提交 `44fe510`，2026-09-28）中，`NetworkProxyConfig::default()` 的 `enabled`、`credential_broker` 和 `mitm` 均为 `false`。实际会话是否启用这些能力，应检查最终生效的配置，不能仅凭使用了 Codex 沙箱就认定 Broker 已启用。
+- **管理范围**：虚拟化依赖内置或配置的 Provider、匹配规则及处理路径。不能据此保证未被识别的自定义秘密、磁盘上的 SSH 私钥或其他可读配置文件已经隐藏；Broker 也不替代文件系统读取限制。
+- **真实凭据回退**：启用 `allow_local_binding = true` 时，为兼容绕过代理的本地连接，Broker 会在构造子进程环境时恢复部分绑定此类目标的真实凭据。因此不能宣称子进程“全程只能看到 Dummy Token”。
+- **能力边界**：隐藏凭据原值不等于禁止使用其授权能力。子进程仍可能通过代理调用获准的接口，操作范围还取决于凭据权限和代理授权策略。
+
+> **一手源码依据**：[代理与 Broker 的配置默认值](https://github.com/openai/codex/blob/44fe510ce3ee61c8ef623adcbf89b901c73ddd61/codex-rs/network-proxy/src/config.rs#L177)、[本地连接相关凭据的子进程环境恢复分支](https://github.com/openai/codex/blob/44fe510ce3ee61c8ef623adcbf89b901c73ddd61/codex-rs/network-proxy/src/credential_broker.rs#L983)。下述流程图仅展示 Broker 启用后、受管凭据经代理使用且未发生回退的路径。
 
 ### 4.1 全流程闭环架构
 
@@ -343,11 +352,11 @@ sequenceDiagram
 
     Note over Host,Broker: 1. 启动前：凭证虚拟化
     Host->>Broker: 传入真实环境变量 (含真实 Token)
-    Broker->>Broker: 生成形状保持的 Dummy Token，替换环境变量与别名
+    Broker->>Broker: 为识别并纳入管理的凭据生成 Dummy Token，替换相关环境变量与别名
     Broker->>Host: 注入 CODEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE="1"
     
     Note over Host,Sandbox: 2. 隔离执行
-    Host->>Sandbox: 启动受限沙箱进程 (仅持有 Dummy Token)
+    Host->>Sandbox: 启动受限沙箱进程 (本路径中的受管凭据为 Dummy Token)
     Sandbox->>Sandbox: 执行命令 (如 curl -H "Authorization: Bearer ghp_xxx" ...)
     
     Note over Sandbox,Proxy: 3. 强制代理与协议探针
@@ -392,8 +401,8 @@ sequenceDiagram
 
 #### 3. 环境变量与全文字符串虚拟化（Virtualization & Aliases）
 真实项目中，Token 常被拼接进复杂字符串（如 `DATABASE_URL=postgres://user:TOKEN@host/db`）或赋给自定义别名。
-- `matching.rs` 和 `replacement.rs` 会递归扫描环境变量全文字符串，将嵌入的凭据子串全量替换为 Dummy Token，并建立别名映射记录（`CredentialAlias`）。
-- **本地回环回退（Local Binding Bypass）**：当请求目标为本地回环（`127.0.0.1` / `localhost`）且启用了 `allow_local_binding = true` 时，由于流量并不经过外部代理出口，Broker 会智能将该连接相关的真实凭证回退恢复，避免打断本地开发与 Mock 测试。
+- `matching.rs` 和 `replacement.rs` 按受管凭据及其匹配规则扫描环境变量字符串，将匹配到的凭据子串替换为 Dummy Token，并建立别名映射记录（`CredentialAlias`）；这不是对任意秘密的通用识别保证。
+- **本地连接回退（Local Binding Bypass）**：启用 `allow_local_binding = true` 时，Broker 在构造子进程环境的阶段，对属于当前环境且绑定了可绕过代理的本地目标的凭据恢复真实值，以兼容本地开发与 Mock 测试。恢复发生在子进程环境准备阶段，不是等到每条请求到达代理后才恢复；这是子进程可能接触真实凭据的明确例外。
 
 #### 4. 延迟解密与协议探针（Protocol Peeking）
 对所有经过 CONNECT 隧道的流量强行执行 TLS MITM 解密会破坏 SSH over Proxy 或长连接非 HTTP 协议。
@@ -417,7 +426,7 @@ $$\text{GET } /v1/public/\%2e\%2e/admin/delete\_user$$
 
 #### 6. Shell 快照与凭证治理（Shell Snapshot Integration）
 
-在命令行工具调度中，Codex 引入了 Shell 快照（Shell Snapshot）机制以消除频繁冷启动的性能开销，同时由 `SnapshotCredentialBroker` 对快照全生命周期实施严格的机密清洗，确保“提速”与“零泄露”二者兼得。
+在命令行工具调度中，Codex 引入 Shell 快照（Shell Snapshot）以减少重复初始化开销，并在 Broker 启用的相关路径中处理快照中的受管凭据，降低真实凭据随快照落盘或重放的风险。这不构成对所有秘密“零泄露”的保证。
 
 ##### 6.1 为什么做 Shell 快照：沙箱冷启动瓶颈与瞬发优化
 
@@ -447,7 +456,7 @@ zsh -lc "git status"
 
 ##### 6.2 Credential Broker 如何做 Shell 快照与“凭证治理”
 
-为了在享受极速快照的同时坚守沙箱的“零机密（Secret Zero）”公理，Codex 构建了贯穿快照生命周期的治理闭环：
+以下描述 Broker 启用时，受管凭据在 Shell 快照捕获、写盘与重放中的处理路径；不能将其推导为任意配置下的“零机密”保证：
 
 **1. 严格在沙箱内部执行快照探针（Sandbox-Scoped Probing）：**
 快照并非在宿主机无防护环境下捕获，而是由 `run_script_with_timeout` 在受控沙箱（`ShellSnapshotSandbox`）内执行。这一设计确保了：
@@ -462,12 +471,12 @@ Codex 在 `shell_snapshot_capture.rs` 中设计了内建探针脚本，不仅捕
 - **Setopts / Shopt（Shell 模式）**：固化当前的选项标志（如 `setopt AUTO_CD`）；
 - **Exports（导出变量）**：提取最终计算展开的 `PATH` 及环境键值对。
 
-**3. 捕获期脱敏与磁盘机密归零（Secret Zero on Disk）：**
+**3. 捕获期脱敏与受管凭据的落盘保护：**
 如果将探针结果直接序列化写盘，用户配置在 `.bashrc`/`.zshrc` 中的私有 Token（如 `export GITHUB_TOKEN="ghp_xxx"`）就会作为明文固化在磁盘快照文件（`~/.codex/snapshots/{session_id}.{nonce}.sh`）中，形成持久化漏洞。
-- `SnapshotCredentialBroker` 在写入磁盘前强制介入：
+- Broker 启用的相关路径在写入磁盘前处理受管凭据：
   - 调用 `apply_to_env_for_snapshot` 解析识别所有受管机密；
-  - 调用 `virtualize_brokered_text` 对抓取到的函数体、别名以及复合文本进行全文扫描，**将其中包含的所有真实凭据原地清洗为形状保持的 Dummy Token**。
-- 最终写入磁盘的快照文件**绝无任何明文真实机密**。
+  - 调用 `virtualize_brokered_text` 对抓取到的函数体、别名以及复合文本进行匹配，**将识别并纳入管理的真实凭据替换为 Dummy Token**。
+- 该机制针对受管凭据降低明文落盘风险，不能保证最终快照不包含任何未被识别的秘密。不能仅凭存在这些处理函数，就认定所有配置和执行路径下的快照均已完成脱敏。
 
 **4. 运行期命令包装与极速重放（Wrapping Mechanism）：**
 当 Agent 下发 `zsh -lc "git status"` 时，Codex 在 `maybe_wrap_shell_lc_with_snapshot` 中将其底层改写：
@@ -476,7 +485,7 @@ zsh -fc "if . '~/.codex/snapshots/session-1.sh' >/dev/null 2>&1; then :; fi; git
 ```
 - **`-f` 参数（NO_RCS）**：强制 Zsh 严禁去读 `/etc/zshrc` 与 `~/.zshrc`，实现 **1 毫秒裸机启动**；
 - **`. snapshot.sh`**：单文件顺序读取，直接将预先算好的函数、别名与已虚拟化的 Dummy Token 注入当前进程内存（耗时约 **2 毫秒**）；
-- **执行目标命令**：环境齐备，立即执行 `git status`。若执行涉及外部接口调用（如后续的 `git push`），则由本地网络代理自动将请求头中的 Dummy Token 还原为真实 Token。
+- **执行目标命令**：环境齐备后执行 `git status`。后续若发起受支持的 HTTP 请求，且请求经过 Broker 代理并通过匹配与授权检查，代理才会注入对应的真实凭据。不能据此认定 SSH 方式的 `git push` 或其他未接入该处理路径的协议也获得了同样的凭据隔离。
 
 **5. 版本联动失效机制（Config Revision Invalidation）：**
 快照文件与凭证代理策略深度绑定（记录 `broker_config_revision`）：
@@ -838,7 +847,7 @@ $$\text{DNS 探测失败} \implies \text{无法证明目标属于合法公网} \
 - [x] **SSRF / DNS 实时探针机制**（已内化至第 6 节）：
   - 核心包含 RFC 全保留网段阻断、Fail-Closed 异步探针、以及 CONNECT/TLS 双阶段重检防御 DNS Rebinding。
 - [x] **Credential Broker 凭据隔离机制**（已内化至第 4 节）：
-  - 沙箱内凭证虚拟化、形状保持替身、协议探测与延迟 MITM 请求头注入。
+  - Broker 启用条件与受管凭据范围、形状保持替身、协议探测与延迟 MITM 请求头注入，以及本地连接真实凭据回退例外。
 - [ ] **编排器的两阶段提权（Two-Attempt Loop）**：
   - `core/src/tools/orchestrator.rs` 中命令执行失败捕获 `SandboxErr::Denied` 后，如何判定工具是否支持提权（`escalate_on_failure`），以及如何从受限沙箱平滑过渡到无沙箱重试。
 - [ ] **进程空间深水区与内核特权边界（待探索 ❓）**：
