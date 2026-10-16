@@ -93,16 +93,27 @@ glob_scan_max_depth = 3
 "*.github.com"   = "allow"
 ```
 
-### 1.3 零配置（Zero-Config）冷启动真相
+### 1.3 默认配置与网络策略的生效条件
 
-很多人误以为 Codex 启动时本地一定预置了一份默认的 `config.toml` 并自带一份默认放行的域名清单。深入源码（`config/src/loader/mod.rs` 与 `network-proxy/src/config.rs`）可还原以下一手工程事实：
+配置文件是否存在、命令是否允许联网、网络代理是否启用，是不同的问题。根据本次核验的源码快照（提交 `44fe510`，2026-09-28），需要区分以下事实：
 
-1. `**config.toml` 默认不存在**：
-  - 首次安装和启动 Codex 时，`~/.codex/config.toml` 并不存在（测试断言 `assert!(!codex_home.path().join("config.toml").exists())`）。
-  - 配置加载器捕获 `NotFound` 错误后**优雅降级为空表（Empty Table）**，系统平滑运行。
-2. **没有任何预置的公网域名白名单**：
-  - 内存默认模型中 `NetworkProxyConfig.domains = None`。
-  - 当 `allowed_domains` 为空时，网络代理默认将所有出站网络判定为 `NotAllowed`，**100% 拦截并挂起**，绝不预设信任。
+1. **配置加载器支持缺失 `config.toml` 的情况**：
+   - 加载器在相应配置文件不存在（`NotFound`）时返回空表，继续配置加载。
+   - 测试中的文件不存在断言验证了该处理路径，不能据此断言所有安装方式和首次启动环境中都不存在 `~/.codex/config.toml`。文件缺失也不意味着其他配置来源均不存在。
+2. **代理默认配置未启用，也未预置域名规则**：
+   - `NetworkProxyConfig::default()` 中，`enabled = false`、`domains = None`。
+   - `domains = None` 不能证明代理已启动，更不能推出所有外联都会进入代理并等待审批。实际会话应以最终生效的配置为准。
+3. **命令网络权限与代理开关分别控制**：
+
+   | 命令网络访问 | 网络代理 | 对应行为 |
+   | :--- | :--- | :--- |
+   | 关闭 | 关闭或开启 | 代理开关不会自动赋予命令联网权限 |
+   | 开启 | 关闭 | 命令的网络连接不受这套代理域名规则过滤 |
+   | 开启 | 开启 | 命令网络请求进入代理策略处理；未配置允许规则的公网目标默认不获放行 |
+
+   对未授权请求，是直接拒绝还是进入审批，还取决于生效的审批策略和运行时支持，不能统一表述为“100% 拦截并挂起”。上述开关关系描述用户配置的常规路径；管理员托管的网络要求可能另外配置和启动代理，也应检查最终生效的策略。
+
+> **一手依据**：[缺失配置文件的加载处理](https://github.com/openai/codex/blob/44fe510ce3ee61c8ef623adcbf89b901c73ddd61/codex-rs/config/src/loader/mod.rs#L604)、[代理配置默认值](https://github.com/openai/codex/blob/44fe510ce3ee61c8ef623adcbf89b901c73ddd61/codex-rs/network-proxy/src/config.rs#L177)、[官方网络访问配置说明](https://learn.chatgpt.com/docs/agent-approvals-security#network-access)。
 
 ---
 
@@ -177,11 +188,11 @@ sequenceDiagram
 
 ## 🌐 3. 网络沙箱完整生命周期与白名单治理
 
-网络沙箱的实际运行并非静态规则，而是一个由 **“初始阻断 $\to$ 人工审批 $\to$ 动态扩充 $\to$ 稳态放行”** 构成的两阶段演进闭环。
+网络请求的处理取决于命令网络权限、代理是否启用、目标规则及审批策略，不能将“初始阻断 → 人工审批 → 动态扩充 → 稳态放行”视为所有 Codex 零配置启动时必经的过程。
 
-### 3.1 完整流程图
+### 3.1 代理启用后的请求处理示例
 
-在真实系统中，流程区分**阶段 A（冷启动无白名单）与阶段 B（动态积累后的稳态）**：
+**以下流程以命令网络访问已开启、网络代理已启用为前提。**在其他网络安全检查也通过的情况下，命中允许规则的目标可直接放行；未命中允许规则的请求可能进入审批，也可能直接被拒绝。显式拒绝规则不能被当作普通的“未命中允许规则”进入放行流程。
 
 ```mermaid
 graph TD
@@ -193,28 +204,34 @@ graph TD
 
     REQ["沙箱内工具发起外联<br/>(例如 curl https://api.github.com)"]:::start
     PROXY["到达宿主 codex-network-proxy"]:::start
-    CHECK{"本地白名单是否存在且命中？"}:::decision
+    DENIED{"是否命中拒绝规则？"}:::decision
+    CHECK{"是否命中允许规则？"}:::decision
     
     FAST["直接放行 (Decision: Allow)"]:::allow
     OUTBOUND["由宿主机真实网卡出站请求<br/>(向公网目标建立 TCP/TLS)"]:::allow
     
     BLOCK["判定为 NotAllowed (未授权)"]:::deny
+    CAN_APPROVE{"当前策略和运行时<br/>是否允许发起网络审批？"}:::decision
     SUSPEND["挂起连接 (tokio 异步暂停)"]:::decision
     APPROVAL["触发 AskForApproval 审批流程<br/>(弹出 NetworkAccess 确认卡片)"]:::decision
     
     USER_DECIDE{"用户是否批准？"}:::decision
     KILL["切断连接<br/>(返回 HTTP 403 / TCP RST)"]:::deny
     
-    EXPAND["★ 动态扩充白名单 ★<br/>1. proxy.add_allowed_domain<br/>2. 写入规则库 (ExecPolicy 持久化)"]:::dynamic
+    EXPAND["按审批决策处理授权<br/>(授权范围取决于决策类型)"]:::dynamic
     RESUME["唤醒挂起的连接"]:::dynamic
 
     REQ --> PROXY
-    PROXY --> CHECK
-    CHECK -->|"已在白名单中 (稳态通道)"| FAST
+    PROXY --> DENIED
+    DENIED -->|"是"| KILL
+    DENIED -->|"否"| CHECK
+    CHECK -->|"命中允许规则"| FAST
     FAST --> OUTBOUND
     
-    CHECK -->|"无白名单 / 未命中 (冷启动初始状态必定走这里)"| BLOCK
-    BLOCK --> SUSPEND
+    CHECK -->|"未命中允许规则"| BLOCK
+    BLOCK --> CAN_APPROVE
+    CAN_APPROVE -->|"否"| KILL
+    CAN_APPROVE -->|"是"| SUSPEND
     SUSPEND --> APPROVAL
     APPROVAL --> USER_DECIDE
     
