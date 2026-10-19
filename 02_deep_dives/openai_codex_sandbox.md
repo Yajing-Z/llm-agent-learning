@@ -448,29 +448,45 @@ $$\text{GET } /v1/public/\%2e\%2e/admin/delete\_user$$
 
 在命令行工具调度中，Codex 引入 Shell 快照（Shell Snapshot）以减少重复初始化开销，并在 Broker 启用的相关路径中处理快照中的受管凭据，降低真实凭据随快照落盘或重放的风险。这不构成对所有秘密“零泄露”的保证。
 
-##### 6.1 为什么做 Shell 快照：沙箱冷启动瓶颈与瞬发优化
+##### 6.1 Shell 如何启动，以及为什么复用环境快照
 
-**1. 业务痛点：为什么不能直接使用裸 Shell（`/bin/sh -c`）？**
-在开发者的真实电脑中，大量关键工具并非位于操作系统预置的系统路径中：
-- Homebrew 安装的工具链（如最新版 Git）位于 `/opt/homebrew/bin`；
-- 版本管理器（`nvm` 管理的 Node.js、`pyenv` 管理的 Python）高度依赖动态 Shell 函数与 Shims；
-- 用户的快捷命令与自定义环境（如 `alias gs='git status'`、`GIT_SSH_COMMAND`）。
+**1. 运行命令前，先准备能找到工具的环境**
 
-为了让 Agent 在沙箱内拥有与用户日常终端完全一致的命令执行能力，常规设计必须使用**登录交互式 Shell（Login Shell）**，即每次执行都拉起：
+以新启动一个 Zsh 进程执行 `git status` 为例，Harness 启动 Shell 程序，由 Shell 执行命令并返回结果。初始化主要是在准备“工具装在哪里、有哪些环境变量和函数”等信息，例如 Homebrew 的路径、版本管理器初始化结果及 `GIT_SSH_COMMAND`。是否需要额外加载启动配置，取决于继承的环境与命令需求，不能说所有命令都必须使用登录式或交互式 Shell。
+
+```text
+启动 Shell → 读取适用的启动配置、准备环境 → 执行命令 → 返回结果
+```
+
+**2. 登录式与交互式是两个不同的开关**
+
 ```bash
 zsh -lc "git status"
 ```
 
-**2. 沙箱内的冷启动放大效应（Sandbox Amplification）：**
-`zsh -lc` 每次启动都会从磁盘逐个读取 `/etc/zshenv`、`/etc/zprofile`、`~/.zshrc`，并递归加载 Oh-My-Zsh 插件目录（解析上百个语法高亮、自动补全脚本）以及执行 `brew shellenv` 派生子进程。
-- **宿主机开销**：冷启动通常需要 **500ms ~ 1500ms**。
-- **沙箱级数级恶化**：在 macOS Seatbelt 或 Linux Landlock 进程沙箱内，每一个配置小文件的 `open`/`stat` 系统调用和进程衍生都会触发内核安全规则的逐次拦截鉴权，导致每次启动耗时被拖慢至 **1.5 ~ 2 秒以上**。
-- **Agent 工具调用的灾难**：像 `ls` 或 `git status` 这类核心逻辑仅需 **3 ~ 5 毫秒** 的极简命令，在沙箱中 99% 以上的时间都在等待 Shell 的空转冷启动。Agent 若连续调用多次检查环境，将产生长达十几秒的卡顿。
+这条命令启动的是登录式、非交互式 Shell：`-l` 表示登录式启动，`-c` 表示执行后面的命令；强制交互式启动使用 `-i`。在默认启动规则下：
 
-**3. 快照提速核心逻辑：**
-既然用户的 Shell 环境配置在短期内是相对静态的，Codex 的思路是**“在沙箱内仅跑一次动态解析并拍照固化，后续命令全量跳过初始化”**：
-- **常规冷启动**：`[Shell 冷启动 1500ms] + [git status 5ms] = 1505ms`
-- **快照瞬间启动**：`[裸机启动 1ms] + [加载快照 2ms] + [git status 5ms] = 8ms`（**性能提升接近 200 倍**）
+- Zsh 首先读取系统级 `zshenv`；启用相应启动选项时，再读取用户的 `.zshenv`。
+- 登录式启动会读取适用的 `zprofile` 和 `zlogin`。
+- 交互式启动才会自动读取适用的 `zshrc`；`zsh -lc` 本身不自动读取 `.zshrc`，除非其他配置或脚本显式加载它。
+- 用户启动文件的位置由 `ZDOTDIR` 决定，未设置时使用用户主目录；系统级文件路径也可能随安装方式变化。
+
+本次核验的 Codex 源码快照（提交 `44fe510`，2026-09-28）中，某些快照捕获路径会通过 `shell_startup_script()` **显式加载用户的 `.zshrc`**。这是 Harness 的额外动作，不能混同于 `zsh -lc` 自身的默认行为。是否加载 Oh My Zsh 插件、执行 `brew shellenv`，取决于实际启动脚本内容。
+
+**3. 快照保存环境状态，减少重复初始化**
+
+```text
+捕获时：准备环境 → 将可捕获的函数、别名、选项和导出变量保存为快照
+重放时：启动 Shell → 加载可用快照、恢复环境 → 执行命令 → 返回结果
+```
+
+**快照保存的是环境状态，不是一个一直活着的 Shell 进程。**在快照可用且执行路径支持时，加载快照可以减少重复执行启动脚本的工作；不能据此保证后续完全跳过初始化、所有命令都使用快照，或与用户日常交互终端完全一致。上述流程描述快照捕获与重放，不将所有工具调用概括为每次都新建 Shell。
+
+**4. 性能收益需要测量**
+
+重复执行启动脚本可能增加短命令的总耗时，但实际收益取决于启动脚本、机器、命令、快照是否可用及执行配置。本文尚无对应的测量数据，因此不提供固定毫秒数、耗时占比或加速倍数，也不把全部额外耗时归因于沙箱的内核检查。
+
+> **一手依据**：[Zsh 启动参数](https://zsh.sourceforge.io/Doc/Release/Invocation.html)、[Zsh 启动文件规则](https://zsh.sourceforge.io/Doc/Release/Files.html)、[Codex 显式加载交互配置的脚本](https://github.com/openai/codex/blob/44fe510ce3ee61c8ef623adcbf89b901c73ddd61/codex-rs/shell-command/src/startup.rs#L9)、[快照捕获的启动模式分支](https://github.com/openai/codex/blob/44fe510ce3ee61c8ef623adcbf89b901c73ddd61/codex-rs/shell-command/src/shell_snapshot_capture.rs#L123)。
 
 ---
 
@@ -478,34 +494,37 @@ zsh -lc "git status"
 
 以下描述 Broker 启用时，受管凭据在 Shell 快照捕获、写盘与重放中的处理路径；不能将其推导为任意配置下的“零机密”保证：
 
-**1. 严格在沙箱内部执行快照探针（Sandbox-Scoped Probing）：**
-快照并非在宿主机无防护环境下捕获，而是由 `run_script_with_timeout` 在受控沙箱（`ShellSnapshotSandbox`）内执行。这一设计确保了：
-- **路径与权限一致性**：快照内捕获的文件路径完全吻合沙箱策略（Seatbelt/Landlock）的实际可读边界；
-- **防范恶意配置**：即使用户的 `~/.zshrc` 中包含第三方不可信脚本，其执行依然受沙箱权限锁死；
-- **网络代理绑定**：探针运行期间的所有网络尝试均受 `codex-network-proxy` 接管。
+**1. 按执行配置捕获 Shell 环境：**
+
+`run_script_with_timeout` 接收可选的 `ShellSnapshotSandbox` 和凭据 Broker 参数。实际捕获是否使用沙箱、使用什么文件权限，以及网络是否经由代理，应结合传入配置判断，不能仅凭函数名就断言所有探针都在同一种沙箱或代理下执行。显式加载启动脚本也不代表脚本中的所有行为均被禁止；可执行的操作仍取决于生效的权限策略。
 
 **2. 四维完整的快照内容捕获（`CapturedSnapshot`）：**
 Codex 在 `shell_snapshot_capture.rs` 中设计了内建探针脚本，不仅捕获环境变量，还固化了无形但关键的内存状态：
-- **Functions（函数声明）**：通过 `declare -f`（Bash）或 `functions`（Zsh）完整抓取内存函数体（如 `nvm`、`pyenv` 实质上全为 Shell 函数而非二进制文件）；
+- **Functions（函数声明）**：通过 `declare -f`（Bash）或 `functions`（Zsh）捕获函数定义；不能将版本管理器的函数、Shims 与可执行文件概括为同一种实现；
 - **Aliases（别名系统）**：通过 `alias -L` 提取别名映射；
 - **Setopts / Shopt（Shell 模式）**：固化当前的选项标志（如 `setopt AUTO_CD`）；
 - **Exports（导出变量）**：提取最终计算展开的 `PATH` 及环境键值对。
 
 **3. 捕获期脱敏与受管凭据的落盘保护：**
-如果将探针结果直接序列化写盘，用户配置在 `.bashrc`/`.zshrc` 中的私有 Token（如 `export GITHUB_TOKEN="ghp_xxx"`）就会作为明文固化在磁盘快照文件（`~/.codex/snapshots/{session_id}.{nonce}.sh`）中，形成持久化漏洞。
+如果将含真实凭据的探针结果直接写盘，用户配置在 `.bashrc`/`.zshrc` 中的私有 Token（如 `export GITHUB_TOKEN="ghp_xxx"`）可能随快照持久化。本次核验的实现使用 `CODEX_HOME/shell_snapshots/` 存放这类快照，默认通常对应 `~/.codex/shell_snapshots/`。
 - Broker 启用的相关路径在写入磁盘前处理受管凭据：
   - 调用 `apply_to_env_for_snapshot` 解析识别所有受管机密；
   - 调用 `virtualize_brokered_text` 对抓取到的函数体、别名以及复合文本进行匹配，**将识别并纳入管理的真实凭据替换为 Dummy Token**。
 - 该机制针对受管凭据降低明文落盘风险，不能保证最终快照不包含任何未被识别的秘密。不能仅凭存在这些处理函数，就认定所有配置和执行路径下的快照均已完成脱敏。
 
-**4. 运行期命令包装与极速重放（Wrapping Mechanism）：**
-当 Agent 下发 `zsh -lc "git status"` 时，Codex 在 `maybe_wrap_shell_lc_with_snapshot` 中将其底层改写：
+**4. 运行期加载快照与执行命令：**
+
+在支持快照重放的执行路径中，可以先读取快照恢复环境，再执行目标命令。下面仅用简化命令展示这一原理，**不是 Codex 源码生成命令的逐字还原，也不代表所有执行路径都会这样改写**；路径需替换为实际快照的完整路径：
+
 ```bash
-zsh -fc "if . '~/.codex/snapshots/session-1.sh' >/dev/null 2>&1; then :; fi; git status"
+zsh -fc '. "/absolute/path/to/.codex/shell_snapshots/example.sh" && git status'
 ```
-- **`-f` 参数（NO_RCS）**：强制 Zsh 严禁去读 `/etc/zshrc` 与 `~/.zshrc`，实现 **1 毫秒裸机启动**；
-- **`. snapshot.sh`**：单文件顺序读取，直接将预先算好的函数、别名与已虚拟化的 Dummy Token 注入当前进程内存（耗时约 **2 毫秒**）；
+
+- **`-f` 参数（NO_RCS）**：关闭 `RCS`，跳过受该选项控制的启动文件；系统级 `zshenv` 仍会执行，且启动脚本可改变选项。它不是“完全没有初始化”或“固定 1 毫秒启动”的保证。
+- **`. snapshot.sh`**：在当前 Shell 中执行快照脚本，恢复已捕获的环境状态。示例使用完整路径，避免将 `~` 放入引号后误以为它仍会展开为用户主目录。
 - **执行目标命令**：环境齐备后执行 `git status`。后续若发起受支持的 HTTP 请求，且请求经过 Broker 代理并通过匹配与授权检查，代理才会注入对应的真实凭据。不能据此认定 SSH 方式的 `git push` 或其他未接入该处理路径的协议也获得了同样的凭据隔离。
+
+> **一手源码依据**：[快照目录常量](https://github.com/openai/codex/blob/44fe510ce3ee61c8ef623adcbf89b901c73ddd61/codex-rs/core/src/shell_snapshot.rs#L107)、[探针启动参数、可选 Broker 与沙箱处理](https://github.com/openai/codex/blob/44fe510ce3ee61c8ef623adcbf89b901c73ddd61/codex-rs/core/src/shell_snapshot.rs#L1022)。
 
 **5. 版本联动失效机制（Config Revision Invalidation）：**
 快照文件与凭证代理策略深度绑定（记录 `broker_config_revision`）：
