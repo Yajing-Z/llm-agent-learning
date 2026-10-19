@@ -896,8 +896,8 @@ $$\text{DNS 探测失败} \implies \text{无法证明目标属于合法公网} \
   - 核心包含非公网地址分类检查、Fail-Closed 异步探针，以及适用 CONNECT/MITM 路径中的双阶段重检；这些机制降低 DNS 重绑定风险，但检查与实际连接之间仍可能存在竞态。
 - [x] **Credential Broker 凭据隔离机制**（已内化至第 4 节）：
   - Broker 启用条件与受管凭据范围、形状保持替身、协议探测与延迟 MITM 请求头注入，以及本地连接真实凭据回退例外。
-- [ ] **编排器的两阶段提权（Two-Attempt Loop）**：
-  - `core/src/tools/orchestrator.rs` 中命令执行失败捕获 `SandboxErr::Denied` 后，如何判定工具是否支持提权（`escalate_on_failure`），以及如何从受限沙箱平滑过渡到无沙箱重试。
+- [x] **沙箱提权与审批机制**（已整理至 [[openai_codex_sandbox_escalation|Codex 沙箱提权与审批机制]]，依据提交 `89461ea`，2026-10-19）：
+  - 区分编排器内部 Two-Attempt Loop 与模型重新提出显式权限申请；理解用户和 Guardian 的审批分工，以及获批后无沙箱执行或保留禁止读取规则的文件系统扩权。底层进程特权与资源限制仍属下列待探索项。
 - [ ] **进程空间深水区与内核特权边界（待探索 ❓）**：
   - 大模型执行 sudo/setuid 时，操作系统内核层（Linux Seccomp / macOS SBPL）如何实施不可逆特权剥夺？失控或常驻后台的子进程树如何由 Harness 干净回收？
 - [ ] **资源限额在原生轻量沙箱中的真实落地（待探索 ❓）**：
@@ -907,6 +907,7 @@ $$\text{DNS 探测失败} \implies \text{无法证明目标属于合法公网} \
 
 ## 🔗 体系联动
 
+- [[openai_codex_sandbox_escalation|Codex 沙箱提权与审批机制]]（权限申请、Guardian 自动审批、两次尝试与新版获批扩权路径）
 - [[openai_codex_architecture|OpenAI Codex 全景架构]]（了解沙箱层在 Codex 四层解耦架构中的物理防爆舱定位）
 - [[openai_codex_cli|OpenAI Codex CLI 逆向]]（理解命令入口参数解析与影子进程 `codex-linux-sandbox` 的启动关系）
 - [[harness_lifecycle|Harness 生命周期与解耦]]（理解通用执行外壳与项目安全策略的动态挂载）

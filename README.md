@@ -17,6 +17,7 @@ $$\text{Harness} = \text{Agent} - \text{Model}$$
 - [Codex 全景架构](./02_deep_dives/openai_codex_architecture.md)：源码结构与执行流程。
 - [Codex CLI](./02_deep_dives/openai_codex_cli.md)：入口启动与运行形态。
 - [Codex 沙箱](./02_deep_dives/openai_codex_sandbox.md)：权限配置、平台隔离与网络生命周期。
+- [Codex 沙箱提权与审批](./02_deep_dives/openai_codex_sandbox_escalation.md)：通俗理解权限申请、Guardian 自动审批、两次尝试与保留禁令的文件系统扩权。
 - [Anthropic Dynamic Workflows](./02_deep_dives/anthropic_dynamic_workflows.md)：动态工作流与 Harness 设计。
 - [《AI Agent Book》笔记](./02_deep_dives/ai_agent_book.md)：工具调用与通信报文。
 
@@ -24,7 +25,7 @@ $$\text{Harness} = \text{Agent} - \text{Model}$$
 
 1. 建立框架：Harness 定义 → 生命周期 → Coding Agent 架构。
 2. 理解交互：MCP 架构与协议 → 工具爆炸与上下文治理 → 《AI Agent Book》笔记。
-3. 深入实现：Codex 全景架构 → CLI → 沙箱；动态工作流可另读 Anthropic 专题。
+3. 深入实现：Codex 全景架构 → CLI → 沙箱
 
 ## 🔗 体系联动
 
