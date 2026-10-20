@@ -19,6 +19,7 @@ $$\text{Harness} = \text{Agent} - \text{Model}$$
 - [Codex 沙箱](./02_deep_dives/openai_codex_sandbox.md)：权限配置、平台隔离与网络生命周期。
 - [Codex 沙箱提权与审批](./02_deep_dives/openai_codex_sandbox_escalation.md)：通俗理解权限申请、Guardian 自动审批、两次尝试与保留禁令的文件系统扩权。
 - [Codex 进程隔离与权限边界](./02_deep_dives/openai_codex_sandbox_processes.md)：通过测试任务理解进程视野、系统调用过滤、身份权限与子进程清场。
+- [Codex 沙箱资源限额](./02_deep_dives/openai_codex_sandbox_resources.md)：区分访问权限与资源用量，理解 CPU、内存、任务数量、超时和输出限制。
 - [Anthropic Dynamic Workflows](./02_deep_dives/anthropic_dynamic_workflows.md)：动态工作流与 Harness 设计。
 - [《AI Agent Book》笔记](./02_deep_dives/ai_agent_book.md)：工具调用与通信报文。
 
@@ -26,7 +27,7 @@ $$\text{Harness} = \text{Agent} - \text{Model}$$
 
 1. 建立框架：Harness 定义 → 生命周期 → Coding Agent 架构。
 2. 理解交互：MCP 架构与协议 → 工具爆炸与上下文治理 → 《AI Agent Book》笔记。
-3. 深入实现：Codex 全景架构 → CLI → 沙箱总览，再按需阅读沙箱提权与审批、进程隔离与权限边界。
+3. 深入实现：Codex 全景架构 → CLI → 沙箱总览，再按需阅读沙箱提权与审批、进程隔离与权限边界、资源限额。
 
 ## 🔗 体系联动
 

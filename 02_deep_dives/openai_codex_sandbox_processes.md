@@ -183,7 +183,10 @@ flowchart TD
 
 Linux 侧各机制可以分别记成：命名空间划定视野，能力移除拿走特权钥匙，`no_new_privs` 约束通过执行程序获得新特权，seccomp 按清单过滤系统调用，生命周期管理负责按范围清场。
 
+这些约束还没有回答“任务能用多少资源”。例如，进程视野独立不等于子进程数量有限；CPU、内存、任务数量和执行超时的区别，见 [[openai_codex_sandbox_resources|资源限额的基本机制]]。
+
 ## 🔗 体系联动
 
+- [[openai_codex_sandbox_resources|Codex 沙箱资源限额的基本机制]]：区分进程视野、任务数量配额和执行器管理记录的上限。
 - [[openai_codex_sandbox|Codex 沙箱机制]]：沙箱总览、平台隔离与网络生命周期。
 - [[openai_codex_sandbox_escalation|Codex 沙箱提权与审批机制]]：区分 Harness 获批扩权与进程自行提升身份权限。
